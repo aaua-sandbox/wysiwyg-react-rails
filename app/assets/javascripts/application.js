@@ -17,4 +17,6 @@
 //= require react_ujs
 //= require marked
 //= require components
+//= require trumbowyg/trumbowyg
+//= require trumbowyg/langs/ja.min
 //= require_tree .
