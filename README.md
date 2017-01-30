@@ -1,24 +1,4 @@
-# README
-
-This README would normally document whatever steps are necessary to get the
-application up and running.
-
-Things you may want to cover:
-
-* Ruby version
-
-* System dependencies
-
-* Configuration
-
-* Database creation
-
-* Database initialization
-
-* How to run the test suite
-
-* Services (job queues, cache servers, search engines, etc.)
-
-* Deployment instructions
-
-* ...
+# README<br>
+<br>
+react-railsを使ってReactのTutorialをやってみる<br>
+[http://qiita.com/joe-re/items/96f12dda4a62470d1d7c](http://qiita.com/joe-re/items/96f12dda4a62470d1d7c)
