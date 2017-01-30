@@ -1,6 +1,11 @@
 var Editor = React.createClass({
   getInitialState: function() {
-    return {data: { html: '<p>hogeee</p>' }};
+    return {
+      data: {
+        name: 'hoge',
+        html: '<p>hogeee</p>'
+      }
+    };
   },
   // componentDidMount: function() {
   //   this.loadCommentsFromServer();
@@ -11,10 +16,16 @@ var Editor = React.createClass({
   },
   render: function() {
     return (
-      <div className="commentBox">
-        <WysiwygEditor onEditorChange={this.handleEditorChange} data={this.state.data} />
-        <WysiwygPreview data={this.state.data} />
-      </div>
+      <table style={{tableLayout: "fixed", width: "100%"}}>
+        <tr>
+          <td style={{width: "50%", verticalAlign: "top"}}>
+            <WysiwygEditor onEditorChange={this.handleEditorChange} data={this.state.data} />
+          </td>
+          <td style={{width: "50%", verticalAlign: "top", border: "solid 1px #dddddd", borderRadius: "4px", padding: "10px"}}>
+            <WysiwygPreview data={this.state.data} />
+          </td>
+        </tr>
+      </table>
     );
   }
 });
@@ -23,15 +34,11 @@ var WysiwygPreview = React.createClass({
   render: function() {
     // マークダウンの表示
     // var rawMarkup = marked(this.props.data.html.toString(), {sanitize: true})
-    console.log('--- WysiwygPreview ---');
-    console.log(this.props.data);
     var rawMarkup = this.props.data.html.toString();
 
     // dangerouslySetInnerHTMLでHTMLをエスケープせずに表示する
     return (
-      <div className="comment">
-        <span dangerouslySetInnerHTML={{__html: rawMarkup}} />
-      </div>
+      <div className="wysiwyg-preview" dangerouslySetInnerHTML={{__html: rawMarkup}} />
     )
   }
 })
@@ -47,25 +54,38 @@ var WysiwygEditor = React.createClass({
   //     textValue: ''
   //   };
   // },
-  getInitialState: function() {
-    return {
-      textValue: this.props.textValue
-    };
-  },
+  // getInitialState: function() {
+  //   return {
+  //     textValue: this.props.textValue
+  //   };
+  // },
   componentWillMount: function() {
     if (this.ta) {
       return;
     }
     this.ta = document.createElement('textarea');
-    this.ta.setAttribute("name", this.props.name);
-    this.ta.value = this.props.textValue;
+    this.ta.setAttribute("name", this.props.data.name);
+    this.ta.value = this.props.data.html;
     $(this.ta).hide();
   },
   componentDidMount: function() {
     ReactDOM.findDOMNode(this).appendChild(this.ta);
 
     var child = ReactDOM.findDOMNode(this.refs.editor);
-    this.editor = $(child).trumbowyg();
+    this.editor = $(child).trumbowyg({
+        lang: 'ja',
+        svgPath: '/icons.svg',
+        removeformatPasted: true,
+        autogrow: true,
+        btns: [
+            ['viewHTML'],
+            ['h2'],
+            ['bold', 'underline', 'foreColor'],
+            ['link'],
+            ['image'],
+            ['blockquote'],
+        ],
+    });
     this.editor
       .on('tbwchange', this.handleChange)
       .on('tbwblur', this.handleChange);
@@ -79,13 +99,16 @@ var WysiwygEditor = React.createClass({
     var html = $(ReactDOM.findDOMNode(this.refs.editor)).trumbowyg('html');
 
     // TODO
-    this.props.onEditorChange({ html: html })
+    this.props.onEditorChange({
+      name: this.props.data.name,
+      html: html
+    });
 
 //    this.setState({textValue: html});
     this.ta.value = html;
   },
   componentWillReceiveProps: function() {
-    this.setState({textValue: this.props.textValue});
+    this.setState({textValue: this.props.data.html});
   },
   // componentDidUpdate: function() {
   //   if ($(ReactDOM.findDOMNode(this.refs.editor)).trumbowyg('html') === this.props.textValue) return;
