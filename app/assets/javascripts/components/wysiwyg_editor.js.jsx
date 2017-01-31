@@ -15,33 +15,51 @@ var Editor = React.createClass({
     };
   },
   componentDidMount: function() {
-    this.setState({ data: [
-      {
-        key: guid(),
-        type: '',
-        data: {
-          name: guid(),
-          html: '<p>Editor1</p>'
-        }
-      }
-    ] });
+    // TODO: Data Load
+    // this.setState({ data: [
+    //   {
+    //     key: guid(),
+    //     type: '',
+    //     data: {
+    //       name: guid(),
+    //       html: '<p>Editor1</p>'
+    //     }
+    //   }
+    // ] });
   },
-  handleEditorInsert: function() {
-    this.insertEditorNode({
-      key: guid(),
-      type: '',
-      data: {
-        name: guid(),
-        html: '<p>EditorAdd</p>'
-      }
-    });
+  handleEditorInsert: function(editorNode) {
+    this.insertEditorNode(editorNode)
   },
   handleEditorChange: function(editorNode) {
     // this.setState({ data: this.state.data.concat([editorNode]) });
     this.updateEditorNode(editorNode);
   },
+  handleEditorDelete: function(editorNode) {
+    this.deleteEditorNode(editorNode);
+  },
+  getNewEdirorNode: function(key) {
+    var ret = false;
+    switch (key) {
+      case 'document':
+        ret = {
+          key: guid(),
+          type: key,
+          data: {
+            name: guid(),
+            html: '<p>EditorAdd</p>'
+          }
+        };
+
+        break;
+      default:
+        console.log("TODO: handleEditorMenuClick when " + key);
+    };
+
+    return ret;
+  },
   // editorNodeの追加
   insertEditorNode: function(editorNode) {
+    // TODO: 追加位置を指定可能にする
     this.setState({ data: this.state.data.concat([editorNode]) });
   },
   // editorNodeの更新
@@ -50,6 +68,15 @@ var Editor = React.createClass({
 
     var editorNodes = this.state.data.concat();
     editorNodes[indexNode] = editorNode;
+
+    this.setState({ data: editorNodes });
+  },
+  // editorNodeの削除
+  deleteEditorNode: function(editorNode) {
+    var indexNode = this.getIndexEditorNode(editorNode);
+
+    var editorNodes = this.state.data.concat();
+    editorNodes.splice(indexNode, 1);
 
     this.setState({ data: editorNodes });
   },
@@ -79,23 +106,28 @@ var Editor = React.createClass({
   },
   // Menuクリックイベント
   handleEditorMenuClick: function(menuKey) {
-    switch (menuKey) {
-      case 'document':
-        this.handleEditorInsert();
-        break;
-      default:
-        console.log("TODO: handleEditorMenuClick when " + menuKey);
-    }
+    var editorNode = this.getNewEdirorNode(menuKey);
+    if (editorNode == false) return;
+
+    this.handleEditorInsert(editorNode);
   },
   render: function() {
     var editorNodes = this.state.data.map(function (editorNode) {
-      return (
-        <WysiwygEditor
-          key={editorNode.key}
-          onEditorChange={this.handleEditorChange}
-          data={editorNode}
-          />
-      );
+      switch (editorNode.type) {
+        case 'document':
+          return (
+            <WysiwygEditor
+              key={editorNode.key}
+              onEditorChange={this.handleEditorChange}
+              onDelete={this.handleEditorDelete}
+              data={editorNode}
+              />
+          );
+
+          break;
+        default:
+          console.log("TODO: Editor render when " + editorNode.key);
+      };
     }.bind(this));
 
     return (
@@ -132,6 +164,7 @@ var EditorPreview = React.createClass({
   }
 });
 
+// Menu
 var EditorMenu = React.createClass({
   handleOnClick: function(e) {
     e.preventDefault();
@@ -154,9 +187,9 @@ var EditorMenu = React.createClass({
       </ul>
     )
   }
-})
+});
 
-
+// 本文
 var WysiwygEditor = React.createClass({
   componentWillMount: function() {
     if (this.ta) {
@@ -191,9 +224,9 @@ var WysiwygEditor = React.createClass({
 
     this.editor.trumbowyg('html', this.props.data.data.html);
   },
-  handleChange: function(event) {
+  handleChange: function(e) {
     if (this.props.onChange) {
-      this.props.onChange(event);
+      this.props.onChange(e);
     }
     var html = $(ReactDOM.findDOMNode(this.refs.editor)).trumbowyg('html');
 
@@ -201,8 +234,11 @@ var WysiwygEditor = React.createClass({
     editorNode.data.html = html;
     this.props.onEditorChange(editorNode);
 
-//    this.setState({textValue: html});
     this.ta.value = html;
+  },
+  handleDelete: function(e) {
+    e.preventDefault();
+    this.props.onDelete(this.props.data);
   },
   componentWillReceiveProps: function() {
     this.setState({textValue: this.props.data.data.html});
@@ -221,7 +257,11 @@ var WysiwygEditor = React.createClass({
   },
   render: function() {
     return (
-      <div><div ref="editor" /></div>
+      <div>
+        <hr />
+        <button type="button" onClick={this.handleDelete}>削除</button>
+        <div ref="editor" />
+      </div>
     );
   }
 });
