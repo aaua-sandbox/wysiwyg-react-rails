@@ -36,14 +36,18 @@ var Editor = React.createClass({
   },
   handleEditorChange: function(editorNode) {
     // this.setState({ data: this.state.data.concat([editorNode]) });
-    var editorNodes = this.state.data.map(function (node) {
+    var editorNodes = this.mergeEditorNode(editorNode);
+    this.setState({ data: editorNodes });
+  },
+  // editorNodeのマージ
+  mergeEditorNode: function(editorNode) {
+    return this.state.data.map(function (node) {
       if (node.key == editorNode.key) {
         return editorNode;
       } else {
         return node;
       }
     }, editorNode)
-    this.setState({ data: editorNodes });
   },
   render: function() {
     var editorNodes = this.state.data.map(function (editorNode) {
