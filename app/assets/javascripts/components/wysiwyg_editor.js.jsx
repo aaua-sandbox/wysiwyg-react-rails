@@ -58,7 +58,15 @@ var Editor = React.createClass({
   },
   getInitialState: function() {
     return {
-      data: []
+      data: [
+        {
+          key: guid(),
+          type: '',
+          data: {
+            html: ''
+          }
+        }
+      ]
     };
   },
   componentDidMount: function() {
@@ -170,33 +178,31 @@ var Editor = React.createClass({
     this.syncOutput();
 
     var editorNodes = this.state.data.map(function (editorNode) {
+      var typeNode = null;
       switch (editorNode.type) {
         case 'text':
-          return (
+          typeNode = (
             <WysiwygEditor
               key={editorNode.key}
               onEditorChange={this.handleEditorChange}
-              onDelete={this.handleEditorDelete}
               data={editorNode}
               />
           );
           break;
         case 'h2':
-          return (
+          typeNode = (
             <EditorH2
               key={editorNode.key}
               onEditorChange={this.handleEditorChange}
-              onDelete={this.handleEditorDelete}
               data={editorNode}
               />
           );
           break;
         case 'embed_tag':
-          return (
+          typeNode = (
             <EditorEmbedTag
               key={editorNode.key}
               onEditorChange={this.handleEditorChange}
-              onDelete={this.handleEditorDelete}
               data={editorNode}
               />
           );
@@ -205,16 +211,23 @@ var Editor = React.createClass({
         default:
           console.log("TODO: Editor render when " + editorNode.key);
       };
+      return (
+        <div style={{border: "solid 1px #ddd", padding: "10px", margin: "10px 0"}}>
+          <EditorMenu
+            onClick={this.handleEditorMenuClick}
+            onDelete={this.handleEditorDelete}
+            data={editorNode}
+            menu={this.getMenu()}
+            />
+          {typeNode}
+        </div>
+      );
     }.bind(this));
 
     return (
       <table style={{tableLayout: "fixed", width: "100%"}}>
         <tr>
           <td style={{width: "50%", verticalAlign: "top"}}>
-            <EditorMenu
-              onClick={this.handleEditorMenuClick}
-              data={this.getMenu()}
-              />
             {editorNodes}
           </td>
           <td style={{width: "50%", verticalAlign: "top", border: "solid 1px #dddddd", borderRadius: "4px", padding: "10px"}}>
@@ -288,8 +301,12 @@ var EditorMenu = React.createClass({
     e.preventDefault();
     this.props.onClick(e.currentTarget.value);
   },
+  handleDelete: function(e) {
+    e.preventDefault();
+    this.props.onDelete(this.props.data);
+  },
   render: function() {
-    var menuNodes = this.props.data.map(function (v) {
+    var menuNodes = this.props.menu.map(function (v) {
       return (
         <li style={{display: "inline-block"}}>
           <button type="button" onClick={this.handleOnClick} value={v.key}>
@@ -298,6 +315,12 @@ var EditorMenu = React.createClass({
         </li>
       );
     }.bind(this));
+
+    menuNodes = menuNodes.concat((
+      <li style={{display: "inline-block", float: "right"}}>
+        <button type="button" onClick={this.handleDelete} style={{fontWeight: "bold", border: "solid 1px #ddd", backgroundColor: "white"}}>×</button>
+      </li>
+    ));
 
     return (
       <ul style={{margin: 0, padding: 0}}>
@@ -327,17 +350,12 @@ var EditorH2 = React.createClass({
     editorNode.data.html = '<h2>' + h2 + '</h2>';
     this.props.onEditorChange(editorNode);
   },
-  handleDelete: function(e) {
-    e.preventDefault();
-    this.props.onDelete(this.props.data);
-  },
   render: function() {
     var text = $('<div>').html(this.props.data.data.html).text();
 
     return (
       <div>
-        <hr />
-        <h3>見出し&ensp;<button type="button" onClick={this.handleDelete}>削除</button></h3>
+        <h3>見出し</h3>
         <input type="text" ref="h2" onChange={this.handleChange} value={text} style={{width: "100%", boxSizing: "border-box"}} />
       </div>
     );
@@ -382,10 +400,6 @@ var WysiwygEditor = React.createClass({
     editorNode.data.html = html;
     this.props.onEditorChange(editorNode);
   },
-  handleDelete: function(e) {
-    e.preventDefault();
-    this.props.onDelete(this.props.data);
-  },
   componentWillUnMount: function () {
     $(this.editor).off();
     this.editor = null;
@@ -393,8 +407,7 @@ var WysiwygEditor = React.createClass({
   render: function() {
     return (
       <div>
-        <hr />
-        <h3>本文&ensp;<button type="button" onClick={this.handleDelete}>削除</button></h3>
+        <h3>本文</h3>
         <div ref="editor" />
       </div>
     );
@@ -418,15 +431,10 @@ var EditorEmbedTag = React.createClass({
     editorNode.data.html = embed_tag;
     this.props.onEditorChange(editorNode);
   },
-  handleDelete: function(e) {
-    e.preventDefault();
-    this.props.onDelete(this.props.data);
-  },
   render: function() {
     return (
       <div>
-        <hr />
-        <h3>埋め込みタグ&ensp;<button type="button" onClick={this.handleDelete}>削除</button></h3>
+        <h3>埋め込みタグ</h3>
         <input type="text" ref="embed_tag" onChange={this.handleChange} value={this.props.data.data.html} style={{width: "100%", boxSizing: "border-box"}} />
       </div>
     );
