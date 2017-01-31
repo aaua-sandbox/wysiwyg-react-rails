@@ -64,13 +64,13 @@ var Editor = React.createClass({
   componentDidMount: function() {
     ReactDOM.findDOMNode(this).appendChild(this.outputHTML);
     ReactDOM.findDOMNode(this).appendChild(this.outputJSON);
+
     // TODO: Data Load
     // this.setState({ data: [
     //   {
     //     key: guid(),
     //     type: '',
     //     data: {
-    //       name: guid(),
     //       html: '<p>Editor1</p>'
     //     }
     //   }
@@ -94,7 +94,6 @@ var Editor = React.createClass({
           key: guid(),
           type: key,
           data: {
-            name: guid(),
             html: '<p>EditorAdd</p>'
           }
         };
@@ -258,18 +257,7 @@ var EditorMenu = React.createClass({
 
  *****************************************************************************/
 var WysiwygEditor = React.createClass({
-  componentWillMount: function() {
-    if (this.ta) {
-      return;
-    }
-    this.ta = document.createElement('textarea');
-    this.ta.setAttribute("name", this.props.data.data.name);
-    this.ta.value = this.props.data.data.html;
-    $(this.ta).hide();
-  },
   componentDidMount: function() {
-    ReactDOM.findDOMNode(this).appendChild(this.ta);
-
     var child = ReactDOM.findDOMNode(this.refs.editor);
     this.editor = $(child).trumbowyg({
         lang: 'ja',
@@ -300,8 +288,6 @@ var WysiwygEditor = React.createClass({
     var editorNode = $.extend(true, {}, this.props.data);
     editorNode.data.html = html;
     this.props.onEditorChange(editorNode);
-
-    this.ta.value = html;
   },
   handleDelete: function(e) {
     e.preventDefault();
@@ -318,9 +304,7 @@ var WysiwygEditor = React.createClass({
   // },
   componentWillUnMount: function () {
     $(this.editor).off();
-    ReactDOM.findDOMNode(this).removeChild(this.ta);
     this.editor = null;
-    this.ta = null;
   },
   render: function() {
     return (
