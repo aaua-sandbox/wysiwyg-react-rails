@@ -254,11 +254,14 @@ var EditorPreview = React.createClass({
     var scriptTwitter = document.createElement("script");
     scriptTwitter.setAttribute("src","//platform.twitter.com/widgets.js");
     scriptTwitter.setAttribute("charset","utf-8");
+    scriptTwitter.async = true;
     preview.appendChild(scriptTwitter);
 
     // TODO: 動作しない
     var scriptPinterest = document.createElement("script");
     scriptPinterest.setAttribute("src","//assets.pinterest.com/js/pinit.js");
+    scriptPinterest.async = true;
+    scriptPinterest.defer = true;
     preview.appendChild(scriptPinterest);
   },
   render: function() {
