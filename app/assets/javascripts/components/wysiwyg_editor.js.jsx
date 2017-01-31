@@ -90,11 +90,13 @@ var Editor = React.createClass({
     var ret = false;
     switch (key) {
       case 'text':
+      case 'h2':
+      case 'embed_tag':
         ret = {
           key: guid(),
           type: key,
           data: {
-            html: '<p>EditorAdd</p>'
+            html: ''
           }
         };
 
@@ -178,8 +180,28 @@ var Editor = React.createClass({
               data={editorNode}
               />
           );
-
           break;
+        case 'h2':
+          return (
+            <EditorH2
+              key={editorNode.key}
+              onEditorChange={this.handleEditorChange}
+              onDelete={this.handleEditorDelete}
+              data={editorNode}
+              />
+          );
+          break;
+        case 'embed_tag':
+          return (
+            <EditorEmbedTag
+              key={editorNode.key}
+              onEditorChange={this.handleEditorChange}
+              onDelete={this.handleEditorDelete}
+              data={editorNode}
+              />
+          );
+          break;
+
         default:
           console.log("TODO: Editor render when " + editorNode.key);
       };
@@ -210,6 +232,30 @@ var Editor = React.createClass({
 
  *****************************************************************************/
 var EditorPreview = React.createClass({
+  componentDidUpdate: function() {
+    // TODO: タグ埋め込みのプレビュー表示をどのようにするか
+    var x = convOutputHTML(this.props.data);
+    console.log(x);
+    var script=/<script\s(.+)<\/script>/gi.exec(x);
+
+    console.log(script);
+    // window.eval(extractscript[1]);
+
+    var ele = document.createElement('span');
+    ele.innerHTML = script[0];
+
+    var preview = ReactDOM.findDOMNode(this.refs.preview);
+    preview.appendChild(ele);
+
+//    window.eval('<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>');
+
+    // var preview = ReactDOM.findDOMNode(this.refs.preview);
+    // var script = document.createElement("script");
+    // script.setAttribute("src","//platform.twitter.com/widgets.js");
+    // script.setAttribute("charset","utf-8");
+    // preview.appendChild(script);
+    // console.log("script");
+  },
   render: function() {
     // マークダウンの表示
     // var rawMarkup = marked(this.props.data.html.toString(), {sanitize: true})
@@ -217,7 +263,9 @@ var EditorPreview = React.createClass({
 
     // dangerouslySetInnerHTMLでHTMLをエスケープせずに表示する
     return (
-      <div className="wysiwyg-preview" dangerouslySetInnerHTML={{__html: innertHtml}} />
+      <div ref="preview">
+        <div className="wysiwyg-preview" dangerouslySetInnerHTML={{__html: innertHtml}} />
+      </div>
     )
   }
 });
@@ -248,6 +296,43 @@ var EditorMenu = React.createClass({
         {menuNodes}
       </ul>
     )
+  }
+});
+
+/*****************************************************************************
+
+  本文
+
+ *****************************************************************************/
+var EditorH2 = React.createClass({
+  handleChange: function(e) {
+    if (this.props.onChange) {
+      this.props.onChange(e);
+    }
+
+    var h2 = ReactDOM.findDOMNode(this.refs.h2).value.trim();
+
+    // TODO: 空の時にプレビューで行が消えて見える
+    if (h2 == '') h2 = '<br>';
+
+    var editorNode = $.extend(true, {}, this.props.data);
+    editorNode.data.html = '<h2>' + h2 + '</h2>';
+    this.props.onEditorChange(editorNode);
+  },
+  handleDelete: function(e) {
+    e.preventDefault();
+    this.props.onDelete(this.props.data);
+  },
+  render: function() {
+    var text = $('<div>').html(this.props.data.data.html).text();
+
+    return (
+      <div>
+        <hr />
+        <h3>見出し&ensp;<button type="button" onClick={this.handleDelete}>削除</button></h3>
+        <input type="text" ref="h2" onChange={this.handleChange} value={text} style={{width: "100%", boxSizing: "border-box"}} />
+      </div>
+    );
   }
 });
 
@@ -293,15 +378,6 @@ var WysiwygEditor = React.createClass({
     e.preventDefault();
     this.props.onDelete(this.props.data);
   },
-  componentWillReceiveProps: function() {
-    this.setState({textValue: this.props.data.data.html});
-  },
-  // componentDidUpdate: function() {
-  //   if ($(ReactDOM.findDOMNode(this.refs.editor)).trumbowyg('html') === this.props.textValue) return;
-  //   this.componentWillUnMount();
-  //   this.componentWillMount();
-  //   this.componentDidMount();
-  // },
   componentWillUnMount: function () {
     $(this.editor).off();
     this.editor = null;
@@ -312,6 +388,38 @@ var WysiwygEditor = React.createClass({
         <hr />
         <h3>本文&ensp;<button type="button" onClick={this.handleDelete}>削除</button></h3>
         <div ref="editor" />
+      </div>
+    );
+  }
+});
+
+/*****************************************************************************
+
+  埋め込みタグ
+
+ *****************************************************************************/
+var EditorEmbedTag = React.createClass({
+  handleChange: function(e) {
+    if (this.props.onChange) {
+      this.props.onChange(e);
+    }
+
+    var embed_tag = ReactDOM.findDOMNode(this.refs.embed_tag).value.trim();
+
+    var editorNode = $.extend(true, {}, this.props.data);
+    editorNode.data.html = embed_tag;
+    this.props.onEditorChange(editorNode);
+  },
+  handleDelete: function(e) {
+    e.preventDefault();
+    this.props.onDelete(this.props.data);
+  },
+  render: function() {
+    return (
+      <div>
+        <hr />
+        <h3>埋め込みタグ&ensp;<button type="button" onClick={this.handleDelete}>削除</button></h3>
+        <input type="text" ref="embed_tag" onChange={this.handleChange} value={this.props.data.data.html} style={{width: "100%", boxSizing: "border-box"}} />
       </div>
     );
   }
