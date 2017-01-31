@@ -1,25 +1,62 @@
+function guid() {
+  function s4() {
+    return Math.floor((1 + Math.random()) * 0x10000)
+      .toString(16)
+      .substring(1);
+  }
+  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+    s4() + '-' + s4() + s4() + s4();
+}
+
 var Editor = React.createClass({
   getInitialState: function() {
     return {
-      data: {
-        name: 'hoge',
-        html: '<p>hogeee</p>'
-      }
+      data: []
     };
   },
-  // componentDidMount: function() {
-  //   this.loadCommentsFromServer();
-  //   setInterval(this.loadCommentsFromServer, this.props.pollInterval);
-  // },
-  handleEditorChange: function(html) {
-    this.setState({ data: html });
+  componentDidMount: function() {
+    this.setState({ data: [
+      {
+        key: guid(),
+        type: '',
+        data: {
+          name: guid(),
+          html: '<p>hoge</p>'
+        }
+      },
+      {
+        key: guid(),
+        type: '',
+        data: {
+          name: guid(),
+          html: '<p>hoge</p>'
+        }
+      }
+    ] })
+  },
+  handleEditorChange: function(editorNode) {
+    // this.setState({ data: this.state.data.concat([editorNode]) });
+    var editorNodes = this.state.data.map(function (node) {
+      if (node.key == editorNode.key) {
+        return editorNode;
+      } else {
+        return node;
+      }
+    }, editorNode)
+    this.setState({ data: editorNodes });
   },
   render: function() {
+    var editorNodes = this.state.data.map(function (editorNode) {
+      return (
+        <WysiwygEditor key={editorNode.key} onEditorChange={this.handleEditorChange} data={editorNode} />
+      );
+    }.bind(this));
+
     return (
       <table style={{tableLayout: "fixed", width: "100%"}}>
         <tr>
           <td style={{width: "50%", verticalAlign: "top"}}>
-            <WysiwygEditor onEditorChange={this.handleEditorChange} data={this.state.data} />
+            {editorNodes}
           </td>
           <td style={{width: "50%", verticalAlign: "top", border: "solid 1px #dddddd", borderRadius: "4px", padding: "10px"}}>
             <WysiwygPreview data={this.state.data} />
@@ -34,11 +71,13 @@ var WysiwygPreview = React.createClass({
   render: function() {
     // マークダウンの表示
     // var rawMarkup = marked(this.props.data.html.toString(), {sanitize: true})
-    var rawMarkup = this.props.data.html.toString();
+    var innertHtml = this.props.data.map(function (editorNode) {
+      return editorNode.data.html.toString();
+    }).join('')
 
     // dangerouslySetInnerHTMLでHTMLをエスケープせずに表示する
     return (
-      <div className="wysiwyg-preview" dangerouslySetInnerHTML={{__html: rawMarkup}} />
+      <div className="wysiwyg-preview" dangerouslySetInnerHTML={{__html: innertHtml}} />
     )
   }
 })
@@ -64,8 +103,8 @@ var WysiwygEditor = React.createClass({
       return;
     }
     this.ta = document.createElement('textarea');
-    this.ta.setAttribute("name", this.props.data.name);
-    this.ta.value = this.props.data.html;
+    this.ta.setAttribute("name", this.props.data.data.name);
+    this.ta.value = this.props.data.data.html;
     $(this.ta).hide();
   },
   componentDidMount: function() {
@@ -90,7 +129,7 @@ var WysiwygEditor = React.createClass({
       .on('tbwchange', this.handleChange)
       .on('tbwblur', this.handleChange);
 
-    this.editor.trumbowyg('html', this.props.data.html);
+    this.editor.trumbowyg('html', this.props.data.data.html);
   },
   handleChange: function(event) {
     if (this.props.onChange) {
@@ -98,17 +137,15 @@ var WysiwygEditor = React.createClass({
     }
     var html = $(ReactDOM.findDOMNode(this.refs.editor)).trumbowyg('html');
 
-    // TODO
-    this.props.onEditorChange({
-      name: this.props.data.name,
-      html: html
-    });
+    var editorNode = $.extend(true, {}, this.props.data);
+    editorNode.data.html = html;
+    this.props.onEditorChange(editorNode);
 
 //    this.setState({textValue: html});
     this.ta.value = html;
   },
   componentWillReceiveProps: function() {
-    this.setState({textValue: this.props.data.html});
+    this.setState({textValue: this.props.data.data.html});
   },
   // componentDidUpdate: function() {
   //   if ($(ReactDOM.findDOMNode(this.refs.editor)).trumbowyg('html') === this.props.textValue) return;
