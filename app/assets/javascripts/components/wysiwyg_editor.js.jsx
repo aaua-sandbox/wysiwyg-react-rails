@@ -8,6 +8,11 @@ function guid() {
     s4() + '-' + s4() + s4() + s4();
 }
 
+/********************************************
+
+  Editor
+
+ ********************************************/
 var Editor = React.createClass({
   getInitialState: function() {
     return {
@@ -149,6 +154,11 @@ var Editor = React.createClass({
   }
 });
 
+/********************************************
+
+  Preview
+
+ ********************************************/
 var EditorPreview = React.createClass({
   render: function() {
     // マークダウンの表示
@@ -164,7 +174,11 @@ var EditorPreview = React.createClass({
   }
 });
 
-// Menu
+/********************************************
+
+  Menu
+
+ ********************************************/
 var EditorMenu = React.createClass({
   handleOnClick: function(e) {
     e.preventDefault();
@@ -189,7 +203,11 @@ var EditorMenu = React.createClass({
   }
 });
 
-// 本文
+/********************************************
+
+  本文
+
+ ********************************************/
 var WysiwygEditor = React.createClass({
   componentWillMount: function() {
     if (this.ta) {
