@@ -8,18 +8,59 @@ function guid() {
     s4() + '-' + s4() + s4() + s4();
 }
 
-/********************************************
+
+/*****************************************************************************
+
+  Editor共通
+
+ *****************************************************************************/
+// 出力用HTMLに変換
+function convOutputHTML(data) {
+  var outputHTML = data.map(function (editorNode) {
+    return editorNode.data.html.toString();
+  }).join('');
+
+  console.log(outputHTML);
+
+  return outputHTML;
+};
+
+// 出力用JSONに変換
+function convOutputJSON(data) {
+  console.log(JSON.stringify(data, null, '\t'));
+  return JSON.stringify(data);
+};
+
+/*****************************************************************************
 
   Editor
 
- ********************************************/
+ *****************************************************************************/
 var Editor = React.createClass({
+  componentWillMount: function() {
+    if (this.outputHTML) {
+      return;
+    } else {
+      this.outputHTML = document.createElement('textarea');
+      this.outputHTML.classList.add('editor-output-html');
+      $(this.outputHTML).hide();
+    }
+    if (this.outputJSON) {
+      return;
+    } else {
+      this.outputJSON = document.createElement('textarea');
+      this.outputJSON.classList.add('editor-output-json');
+      $(this.outputJSON).hide();
+    }
+  },
   getInitialState: function() {
     return {
       data: []
     };
   },
   componentDidMount: function() {
+    ReactDOM.findDOMNode(this).appendChild(this.outputHTML);
+    ReactDOM.findDOMNode(this).appendChild(this.outputJSON);
     // TODO: Data Load
     // this.setState({ data: [
     //   {
@@ -116,7 +157,14 @@ var Editor = React.createClass({
 
     this.handleEditorInsert(editorNode);
   },
+  // Outputの情報を最新化
+  syncOutput: function() {
+    this.outputHTML.value = convOutputHTML(this.state.data);
+    this.outputJSON.value = convOutputJSON(this.state.data);
+  },
   render: function() {
+    this.syncOutput();
+
     var editorNodes = this.state.data.map(function (editorNode) {
       switch (editorNode.type) {
         case 'document':
@@ -154,18 +202,16 @@ var Editor = React.createClass({
   }
 });
 
-/********************************************
+/*****************************************************************************
 
   Preview
 
- ********************************************/
+ *****************************************************************************/
 var EditorPreview = React.createClass({
   render: function() {
     // マークダウンの表示
     // var rawMarkup = marked(this.props.data.html.toString(), {sanitize: true})
-    var innertHtml = this.props.data.map(function (editorNode) {
-      return editorNode.data.html.toString();
-    }).join('')
+    var innertHtml = convOutputHTML(this.props.data);
 
     // dangerouslySetInnerHTMLでHTMLをエスケープせずに表示する
     return (
@@ -174,11 +220,11 @@ var EditorPreview = React.createClass({
   }
 });
 
-/********************************************
+/*****************************************************************************
 
   Menu
 
- ********************************************/
+ *****************************************************************************/
 var EditorMenu = React.createClass({
   handleOnClick: function(e) {
     e.preventDefault();
@@ -203,11 +249,11 @@ var EditorMenu = React.createClass({
   }
 });
 
-/********************************************
+/*****************************************************************************
 
   本文
 
- ********************************************/
+ *****************************************************************************/
 var WysiwygEditor = React.createClass({
   componentWillMount: function() {
     if (this.ta) {
