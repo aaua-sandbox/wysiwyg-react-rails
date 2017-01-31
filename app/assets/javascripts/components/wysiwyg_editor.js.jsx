@@ -21,38 +21,80 @@ var Editor = React.createClass({
         type: '',
         data: {
           name: guid(),
-          html: '<p>hoge</p>'
-        }
-      },
-      {
-        key: guid(),
-        type: '',
-        data: {
-          name: guid(),
-          html: '<p>hoge</p>'
+          html: '<p>Editor1</p>'
         }
       }
-    ] })
+    ] });
+  },
+  handleEditorInsert: function() {
+    this.insertEditorNode({
+      key: guid(),
+      type: '',
+      data: {
+        name: guid(),
+        html: '<p>EditorAdd</p>'
+      }
+    });
   },
   handleEditorChange: function(editorNode) {
     // this.setState({ data: this.state.data.concat([editorNode]) });
-    var editorNodes = this.mergeEditorNode(editorNode);
+    this.updateEditorNode(editorNode);
+  },
+  // editorNodeの追加
+  insertEditorNode: function(editorNode) {
+    this.setState({ data: this.state.data.concat([editorNode]) });
+  },
+  // editorNodeの更新
+  updateEditorNode: function(editorNode) {
+    var indexNode = this.getIndexEditorNode(editorNode);
+
+    var editorNodes = this.state.data.concat();
+    editorNodes[indexNode] = editorNode;
+
     this.setState({ data: editorNodes });
   },
-  // editorNodeのマージ
-  mergeEditorNode: function(editorNode) {
-    return this.state.data.map(function (node) {
+  // editorNodeのindexを取得
+  getIndexEditorNode: function(editorNode) {
+    var ret = false;
+    this.state.data.some(function (node, index) {
       if (node.key == editorNode.key) {
-        return editorNode;
-      } else {
-        return node;
+        ret = index;
+        return true;
       }
-    }, editorNode)
+    }, editorNode);
+
+    return ret;
+  },
+  // Menu
+  getMenu: function() {
+    return [
+      { key: 'h2', text: '見出し' },
+      { key: 'document', text: '本文' },
+      { key: 'image', text: '画像' },
+      { key: 'tag', text: 'タグ' },
+      { key: 'list', text: 'リスト' },
+      { key: 'border', text: '枠線' },
+      { key: 'article_link', text: '記事リンク' }
+    ];
+  },
+  // Menuクリックイベント
+  handleEditorMenuClick: function(menuKey) {
+    switch (menuKey) {
+      case 'document':
+        this.handleEditorInsert();
+        break;
+      default:
+        console.log("TODO: handleEditorMenuClick when " + menuKey);
+    }
   },
   render: function() {
     var editorNodes = this.state.data.map(function (editorNode) {
       return (
-        <WysiwygEditor key={editorNode.key} onEditorChange={this.handleEditorChange} data={editorNode} />
+        <WysiwygEditor
+          key={editorNode.key}
+          onEditorChange={this.handleEditorChange}
+          data={editorNode}
+          />
       );
     }.bind(this));
 
@@ -60,10 +102,14 @@ var Editor = React.createClass({
       <table style={{tableLayout: "fixed", width: "100%"}}>
         <tr>
           <td style={{width: "50%", verticalAlign: "top"}}>
+            <EditorMenu
+              onClick={this.handleEditorMenuClick}
+              data={this.getMenu()}
+              />
             {editorNodes}
           </td>
           <td style={{width: "50%", verticalAlign: "top", border: "solid 1px #dddddd", borderRadius: "4px", padding: "10px"}}>
-            <WysiwygPreview data={this.state.data} />
+            <EditorPreview data={this.state.data} />
           </td>
         </tr>
       </table>
@@ -71,7 +117,7 @@ var Editor = React.createClass({
   }
 });
 
-var WysiwygPreview = React.createClass({
+var EditorPreview = React.createClass({
   render: function() {
     // マークダウンの表示
     // var rawMarkup = marked(this.props.data.html.toString(), {sanitize: true})
@@ -84,24 +130,34 @@ var WysiwygPreview = React.createClass({
       <div className="wysiwyg-preview" dangerouslySetInnerHTML={{__html: innertHtml}} />
     )
   }
+});
+
+var EditorMenu = React.createClass({
+  handleOnClick: function(e) {
+    e.preventDefault();
+    this.props.onClick(e.currentTarget.value);
+  },
+  render: function() {
+    var menuNodes = this.props.data.map(function (v) {
+      return (
+        <li style={{display: "inline-block"}}>
+          <button type="button" onClick={this.handleOnClick} value={v.key}>
+            {v.text}
+          </button>
+        </li>
+      );
+    }.bind(this));
+
+    return (
+      <ul style={{margin: 0, padding: 0}}>
+        {menuNodes}
+      </ul>
+    )
+  }
 })
 
+
 var WysiwygEditor = React.createClass({
-  // propTypes: {
-  //   onChange: React.PropTypes.func,
-  //   name: React.PropTypes.string,
-  //   textValue: React.PropTypes.string
-  // },
-  // getDefaultProps: function() {
-  //   return {
-  //     textValue: ''
-  //   };
-  // },
-  // getInitialState: function() {
-  //   return {
-  //     textValue: this.props.textValue
-  //   };
-  // },
   componentWillMount: function() {
     if (this.ta) {
       return;
