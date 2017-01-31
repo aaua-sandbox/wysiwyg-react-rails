@@ -16,20 +16,23 @@ function guid() {
  *****************************************************************************/
 // 出力用HTMLに変換
 function convOutputHTML(data) {
-  var outputHTML = data.map(function (editorNode) {
+  return data.map(function (editorNode) {
     return editorNode.data.html.toString();
   }).join('');
-
-  console.log(outputHTML);
-
-  return outputHTML;
 };
 
 // 出力用JSONに変換
 function convOutputJSON(data) {
-  console.log(JSON.stringify(data, null, '\t'));
   return JSON.stringify(data);
 };
+
+// debug用出力
+function p() {
+  console.log('----- Editor output -----');
+  console.log($(".editor-output-html").val());
+  console.log(JSON.stringify(JSON.parse($(".editor-output-json").val()), null, '\t'));
+  console.log('-------------------------');
+}
 
 /*****************************************************************************
 
@@ -86,7 +89,7 @@ var Editor = React.createClass({
   getNewEdirorNode: function(key) {
     var ret = false;
     switch (key) {
-      case 'document':
+      case 'text':
         ret = {
           key: guid(),
           type: key,
@@ -142,10 +145,10 @@ var Editor = React.createClass({
   getMenu: function() {
     return [
       { key: 'h2', text: '見出し' },
-      { key: 'document', text: '本文' },
-      { key: 'image', text: '画像' },
-      { key: 'tag', text: 'タグ' },
-      { key: 'list', text: 'リスト' },
+      { key: 'text', text: '本文' },
+      { key: 'img', text: '画像' },
+      { key: 'embed_tag', text: 'タグ' },
+      { key: 'ul', text: 'リスト' },
       { key: 'border', text: '枠線' },
       { key: 'article_link', text: '記事リンク' }
     ];
@@ -167,7 +170,7 @@ var Editor = React.createClass({
 
     var editorNodes = this.state.data.map(function (editorNode) {
       switch (editorNode.type) {
-        case 'document':
+        case 'text':
           return (
             <WysiwygEditor
               key={editorNode.key}
@@ -323,7 +326,7 @@ var WysiwygEditor = React.createClass({
     return (
       <div>
         <hr />
-        <button type="button" onClick={this.handleDelete}>削除</button>
+        <h3>本文&ensp;<button type="button" onClick={this.handleDelete}>削除</button></h3>
         <div ref="editor" />
       </div>
     );
