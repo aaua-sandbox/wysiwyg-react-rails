@@ -233,28 +233,33 @@ var Editor = React.createClass({
  *****************************************************************************/
 var EditorPreview = React.createClass({
   componentDidUpdate: function() {
-    // TODO: タグ埋め込みのプレビュー表示をどのようにするか
-    var x = convOutputHTML(this.props.data);
-    console.log(x);
-    var script=/<script\s(.+)<\/script>/gi.exec(x);
-
-    console.log(script);
-    // window.eval(extractscript[1]);
-
-    var ele = document.createElement('span');
-    ele.innerHTML = script[0];
+//     // TODO: タグ埋め込みのプレビュー表示をどのようにするか
+//     var x = convOutputHTML(this.props.data);
+//     console.log(x);
+//     var script=/<script\s(.+)<\/script>/gi.exec(x);
+//
+//     console.log(script);
+//     // window.eval(extractscript[1]);
+//
+//     var ele = document.createElement('span');
+//     ele.innerHTML = script[0];
+//
+//     var preview = ReactDOM.findDOMNode(this.refs.preview);
+//     preview.appendChild(ele);
+//
+// //    window.eval('<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>');
 
     var preview = ReactDOM.findDOMNode(this.refs.preview);
-    preview.appendChild(ele);
 
-//    window.eval('<script async src="//platform.twitter.com/widgets.js" charset="utf-8"></script>');
+    var scriptTwitter = document.createElement("script");
+    scriptTwitter.setAttribute("src","//platform.twitter.com/widgets.js");
+    scriptTwitter.setAttribute("charset","utf-8");
+    preview.appendChild(scriptTwitter);
 
-    // var preview = ReactDOM.findDOMNode(this.refs.preview);
-    // var script = document.createElement("script");
-    // script.setAttribute("src","//platform.twitter.com/widgets.js");
-    // script.setAttribute("charset","utf-8");
-    // preview.appendChild(script);
-    // console.log("script");
+    // TODO: 動作しない
+    var scriptPinterest = document.createElement("script");
+    scriptPinterest.setAttribute("src","//assets.pinterest.com/js/pinit.js");
+    preview.appendChild(scriptPinterest);
   },
   render: function() {
     // マークダウンの表示
