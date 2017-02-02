@@ -84,8 +84,12 @@ var Editor = React.createClass({
     //   }
     // ] });
   },
-  handleEditorInsert: function(editorNode) {
-    this.insertEditorNode(editorNode)
+  handleEditorInsert: function(index) {
+    var nodeKey = guid();
+    var editorNode = this.getNewEdirorNode(nodeKey, '');
+    if (editorNode == false) return;
+
+    this.insertEditorNode(editorNode, index);
   },
   handleEditorChange: function(editorNode) {
     // this.setState({ data: this.state.data.concat([editorNode]) });
@@ -94,15 +98,15 @@ var Editor = React.createClass({
   handleEditorDelete: function(editorNode) {
     this.deleteEditorNode(editorNode);
   },
-  getNewEdirorNode: function(key) {
+  getNewEdirorNode: function(key, type) {
     var ret = false;
-    switch (key) {
+    switch (type) {
       case 'text':
       case 'h2':
       case 'embed_tag':
         ret = {
-          key: guid(),
-          type: key,
+          key: key,
+          type: type,
           data: {
             html: ''
           }
@@ -110,15 +114,25 @@ var Editor = React.createClass({
 
         break;
       default:
-        console.log("TODO: handleEditorMenuClick when " + key);
+        ret = {
+          key: key,
+          type: type,
+          data: {
+            html: ''
+          }
+        };
+        console.log("TODO: handleEditorMenuClick when " + type);
     };
 
     return ret;
   },
   // editorNodeの追加
-  insertEditorNode: function(editorNode) {
-    // TODO: 追加位置を指定可能にする
-    this.setState({ data: this.state.data.concat([editorNode]) });
+  insertEditorNode: function(editorNode, index) {
+    if (index !== 0 && !index) index = this.state.data.length;
+
+    var newEditorNode = this.state.data.concat();
+    newEditorNode.splice( index, 0, editorNode ) ;
+    this.setState({ data: newEditorNode });
   },
   // editorNodeの更新
   updateEditorNode: function(editorNode) {
@@ -163,11 +177,11 @@ var Editor = React.createClass({
     ];
   },
   // Menuクリックイベント
-  handleEditorMenuClick: function(menuKey) {
-    var editorNode = this.getNewEdirorNode(menuKey);
+  handleEditorMenuClick: function(nodeKey, nodeType) {
+    var editorNode = this.getNewEdirorNode(nodeKey, nodeType);
     if (editorNode == false) return;
 
-    this.handleEditorInsert(editorNode);
+    this.handleEditorChange(editorNode);
   },
   // Outputの情報を最新化
   syncOutput: function() {
@@ -209,17 +223,23 @@ var Editor = React.createClass({
           break;
 
         default:
-          console.log("TODO: Editor render when " + editorNode.key);
+          // Menuのみ
       };
       return (
-        <div style={{border: "solid 1px #ddd", padding: "10px", margin: "10px 0"}}>
-          <EditorMenu
-            onClick={this.handleEditorMenuClick}
-            onDelete={this.handleEditorDelete}
-            data={editorNode}
-            menu={this.getMenu()}
+        <div>
+          <div style={{border: "solid 1px #ddd", padding: "10px", margin: "10px 0"}}>
+            <EditorMenu
+              onClick={this.handleEditorMenuClick}
+              onDelete={this.handleEditorDelete}
+              data={editorNode}
+              menu={this.getMenu()}
+              />
+            {typeNode}
+          </div>
+          <EditorNodeInsert
+            onClick={this.handleEditorInsert}
+            index={false}
             />
-          {typeNode}
         </div>
       );
     }.bind(this));
@@ -228,6 +248,10 @@ var Editor = React.createClass({
       <table style={{tableLayout: "fixed", width: "100%"}}>
         <tr>
           <td style={{width: "50%", verticalAlign: "top"}}>
+            <EditorNodeInsert
+              onClick={this.handleEditorInsert}
+              index={0}
+              />
             {editorNodes}
           </td>
           <td style={{width: "50%", verticalAlign: "top", border: "solid 1px #dddddd", borderRadius: "4px", padding: "10px"}}>
@@ -299,7 +323,7 @@ var EditorPreview = React.createClass({
 var EditorMenu = React.createClass({
   handleOnClick: function(e) {
     e.preventDefault();
-    this.props.onClick(e.currentTarget.value);
+    this.props.onClick(this.props.data.key, e.currentTarget.value);
   },
   handleDelete: function(e) {
     e.preventDefault();
@@ -327,6 +351,23 @@ var EditorMenu = React.createClass({
         {menuNodes}
       </ul>
     )
+  }
+});
+
+/*****************************************************************************
+
+  EditorNodeInsert
+
+ *****************************************************************************/
+var EditorNodeInsert = React.createClass({
+  handleOnClick: function(e) {
+    e.preventDefault();
+    this.props.onClick(this.props.data);
+  },
+  render: function() {
+    return (
+      <button type="button" onClick={this.handleOnClick}>追加</button>
+    );
   }
 });
 
