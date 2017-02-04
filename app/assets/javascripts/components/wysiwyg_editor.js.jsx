@@ -546,7 +546,7 @@ var EditorImage = React.createClass({
         <textarea ref="caption"
           onChange={this.handleChange}
           value={this.props.data.data.caption}
-          style={{border: "solid 1px #ddd", width: "100%"}}
+          style={{border: "solid 1px #ddd", width: "100%", marginWidth: "100%"}}
           />
       </div>
     );
