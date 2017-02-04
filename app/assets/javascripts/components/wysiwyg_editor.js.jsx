@@ -39,6 +39,14 @@ function convOutputHTML(data) {
         }
         html += '</figure>';
         break;
+      case 'ul':
+        html = '<ul>';
+        html += editorNode.data.textList.map(function(text) {
+          if (text.html == '') return;
+          return '<li>' + text.html + '</li>';
+        }).join('');
+        html += '<ul>';
+        break;
 
       default:
         console.log("TODO: convOutputHTML when " + editorNode.type);
@@ -60,6 +68,57 @@ function p() {
   console.log(JSON.stringify(JSON.parse($(".editor-output-json").val()), null, '\t'));
   console.log('-------------------------');
 }
+
+// 新規EdirorNodeの取得
+function getNewEdirorNode(key, type) {
+  var ret = false;
+  switch (type) {
+    case 'text':
+    case 'h2':
+    case 'embed_tag':
+      ret = {
+        key: key,
+        type: type,
+        data: {
+          html: ''
+        }
+      };
+      break;
+    case 'image':
+      ret = {
+        key: key,
+        type: type,
+        data: {
+          src: '',
+          caption: ''
+        }
+      };
+      break;
+    case 'ul':
+      ret = {
+        key: key,
+        type: type,
+        data: {
+          textList: [{
+            key: guid(),
+            html: ''
+          }]
+        }
+      };
+      break;
+    default:
+      ret = {
+        key: key,
+        type: type,
+        data: {
+          html: ''
+        }
+      };
+      console.log("TODO: handleEditorMenuClick when " + type);
+  };
+
+  return ret;
+};
 
 /*****************************************************************************
 
@@ -113,7 +172,7 @@ var Editor = React.createClass({
   },
   handleEditorInsert: function(index) {
     var nodeKey = guid();
-    var editorNode = this.getNewEdirorNode(nodeKey, '');
+    var editorNode = getNewEdirorNode(nodeKey, '');
     if (editorNode == false) return;
 
     this.insertEditorNode(editorNode, index);
@@ -125,48 +184,8 @@ var Editor = React.createClass({
   handleEditorDelete: function(editorNode) {
     this.deleteEditorNode(editorNode);
   },
-  getNewEdirorNode: function(key, type) {
-    var ret = false;
-    switch (type) {
-      case 'text':
-      case 'h2':
-      case 'embed_tag':
-        ret = {
-          key: key,
-          type: type,
-          data: {
-            html: ''
-          }
-        };
-
-        break;
-      case 'image':
-        ret = {
-          key: key,
-          type: type,
-          data: {
-            src: '',
-            caption: ''
-          }
-        };
-
-        break;
-      default:
-        ret = {
-          key: key,
-          type: type,
-          data: {
-            html: ''
-          }
-        };
-        console.log("TODO: handleEditorMenuClick when " + type);
-    };
-
-    return ret;
-  },
   // editorNodeの追加
   insertEditorNode: function(editorNode, index) {
-    console.log('insertEditorNode: ' + index)
     if (index !== 0 && !index) index = this.state.data.length;
 
     var newEditorNode = this.state.data.concat();
@@ -217,7 +236,7 @@ var Editor = React.createClass({
   },
   // Menuクリックイベント
   handleEditorMenuClick: function(nodeKey, nodeType) {
-    var editorNode = this.getNewEdirorNode(nodeKey, nodeType);
+    var editorNode = getNewEdirorNode(nodeKey, nodeType);
     if (editorNode == false) return;
 
     this.handleEditorChange(editorNode);
@@ -254,6 +273,15 @@ var Editor = React.createClass({
         case 'image':
           typeNode = (
             <EditorImage
+              key={editorNode.key}
+              onEditorChange={this.handleEditorChange}
+              data={editorNode}
+              />
+          );
+          break;
+        case 'ul':
+          typeNode = (
+            <EditorList
               key={editorNode.key}
               onEditorChange={this.handleEditorChange}
               data={editorNode}
@@ -480,9 +508,7 @@ var WysiwygEditor = React.createClass({
             ['image'],
         ],
     });
-    this.editor
-      .on('tbwchange', this.handleChange)
-      .on('tbwblur', this.handleChange);
+    this.editor.on('tbwchange', this.handleChange);
 
     this.editor.trumbowyg('html', this.props.data.data.html);
   },
@@ -548,6 +574,68 @@ var EditorImage = React.createClass({
           value={this.props.data.data.caption}
           style={{border: "solid 1px #ddd", width: "100%", marginWidth: "100%"}}
           />
+      </div>
+    );
+  }
+});
+
+/*****************************************************************************
+
+  リスト
+
+ *****************************************************************************/
+var EditorList = React.createClass({
+  handleChange: function(editorNode) {
+    if (this.props.onChange) {
+      this.props.onChange(e);
+    }
+
+    var editorNodeIndex = false;
+    this.props.data.data.textList.some(function (node, index) {
+      if (node.key == editorNode.key) {
+        editorNodeIndex = index;
+        return true;
+      }
+    }, editorNode);
+
+    var setItem = {
+      key: editorNode.key,
+      html: editorNode.data.html
+    }
+
+    var newEditorNode = $.extend(true, {}, this.props.data);
+    if (editorNodeIndex === false) {
+      newEditorNode.data.textList.push(setItem);
+    } else {
+      newEditorNode.data.textList[editorNodeIndex] = setItem;
+    };
+
+    if (newEditorNode.data.textList.length == 0 || newEditorNode.data.textList[newEditorNode.data.textList.length - 1].html != '') {
+      newEditorNode.data.textList.push({
+        key: guid(),
+        html: ''
+      });
+    }
+
+    this.props.onEditorChange(newEditorNode);
+  },
+  render: function() {
+    var typeNodes = this.props.data.data.textList.map(function(text) {
+      var editorNode = getNewEdirorNode(text.key, 'text');
+      editorNode.data.html = text.html;
+      return (
+        <WysiwygEditor
+          key={editorNode.key}
+          onEditorChange={this.handleChange}
+          data={editorNode}
+          />
+      );
+    }.bind(this));
+
+    return (
+      <div>
+        <span style={{fontSize: "12px"}}>リスト:</span><br />
+        {typeNodes}
       </div>
     );
   }
