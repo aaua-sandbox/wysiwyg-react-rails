@@ -274,7 +274,17 @@ var Editor = React.createClass({
               />
             {editorNodes}
           </td>
-          <td style={{width: "50%", verticalAlign: "top", border: "solid 1px #dddddd", borderRadius: "4px", padding: "10px"}}>
+          <td style={{
+              width: "50%",
+              verticalAlign: "top",
+              borderLeft: "dashed 1px #dddddd",
+              padding: "10px",
+              position: "fixed",
+              top: "0",
+              height: "100%",
+              boxSizing: "border-box",
+              overflowY: "scroll"
+            }}>
             <EditorPreview data={this.state.data} />
           </td>
         </tr>
@@ -411,7 +421,7 @@ var EditorH2 = React.createClass({
   render: function() {
     return (
       <div>
-        <h3>見出し</h3>
+        <span style={{fontSize: "12px"}}>見出し:</span><br />
         <input type="text" ref="h2"
           onChange={this.handleChange}
           value={this.props.data.data.html}
@@ -437,11 +447,9 @@ var WysiwygEditor = React.createClass({
         autogrow: true,
         btns: [
             ['viewHTML'],
-            ['h2'],
             ['bold', 'underline', 'foreColor'],
             ['link'],
             ['image'],
-            ['blockquote'],
         ],
     });
     this.editor
@@ -467,7 +475,7 @@ var WysiwygEditor = React.createClass({
   render: function() {
     return (
       <div>
-        <h3>本文</h3>
+        <span style={{fontSize: "12px"}}>本文:</span><br />
         <div ref="editor" />
       </div>
     );
@@ -494,7 +502,7 @@ var EditorEmbedTag = React.createClass({
   render: function() {
     return (
       <div>
-        <h3>埋め込みタグ</h3>
+        <span style={{fontSize: "12px"}}>埋め込みタグ:</span><br />
         <input type="text" ref="embed_tag" onChange={this.handleChange} value={this.props.data.data.html} style={{width: "100%", boxSizing: "border-box"}} />
       </div>
     );
