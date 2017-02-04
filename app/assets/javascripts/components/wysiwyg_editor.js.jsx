@@ -17,7 +17,26 @@ function guid() {
 // 出力用HTMLに変換
 function convOutputHTML(data) {
   return data.map(function (editorNode) {
-    return editorNode.data.html.toString();
+
+    var html = '';
+    switch (editorNode.type) {
+      case 'text':
+      case 'embed_tag':
+        html = editorNode.data.html.toString();
+        break;
+      case 'h2':
+        html = editorNode.data.html.toString();
+        // TODO: 空の時にプレビューで行が消えて見える
+        if (html == '') html = '<br>';
+
+        html = '<h2>' + html + '</h2>';
+        break;
+
+      default:
+        console.log("TODO: convOutputHTML when " + editorNode.type);
+    };
+
+    return html;
   }).join('');
 };
 
@@ -128,6 +147,7 @@ var Editor = React.createClass({
   },
   // editorNodeの追加
   insertEditorNode: function(editorNode, index) {
+    console.log('insertEditorNode: ' + index)
     if (index !== 0 && !index) index = this.state.data.length;
 
     var newEditorNode = this.state.data.concat();
@@ -191,7 +211,7 @@ var Editor = React.createClass({
   render: function() {
     this.syncOutput();
 
-    var editorNodes = this.state.data.map(function (editorNode) {
+    var editorNodes = this.state.data.map(function (editorNode, index) {
       var typeNode = null;
       switch (editorNode.type) {
         case 'text':
@@ -238,7 +258,7 @@ var Editor = React.createClass({
           </div>
           <EditorNodeInsert
             onClick={this.handleEditorInsert}
-            index={false}
+            index={index + 1}
             />
         </div>
       );
@@ -362,7 +382,7 @@ var EditorMenu = React.createClass({
 var EditorNodeInsert = React.createClass({
   handleOnClick: function(e) {
     e.preventDefault();
-    this.props.onClick(this.props.data);
+    this.props.onClick(this.props.index);
   },
   render: function() {
     return (
@@ -384,20 +404,19 @@ var EditorH2 = React.createClass({
 
     var h2 = ReactDOM.findDOMNode(this.refs.h2).value.trim();
 
-    // TODO: 空の時にプレビューで行が消えて見える
-    if (h2 == '') h2 = '<br>';
-
     var editorNode = $.extend(true, {}, this.props.data);
-    editorNode.data.html = '<h2>' + h2 + '</h2>';
+    editorNode.data.html = h2;
     this.props.onEditorChange(editorNode);
   },
   render: function() {
-    var text = $('<div>').html(this.props.data.data.html).text();
-
     return (
       <div>
         <h3>見出し</h3>
-        <input type="text" ref="h2" onChange={this.handleChange} value={text} style={{width: "100%", boxSizing: "border-box"}} />
+        <input type="text" ref="h2"
+          onChange={this.handleChange}
+          value={this.props.data.data.html}
+          style={{width: "100%", boxSizing: "border-box"}}
+          />
       </div>
     );
   }
