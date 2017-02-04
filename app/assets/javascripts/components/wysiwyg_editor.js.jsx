@@ -42,8 +42,8 @@ function convOutputHTML(data) {
       case 'ul':
         html = '<ul>';
         html += editorNode.data.textList.map(function(text) {
-          if (text.html == '') return;
-          return '<li>' + text.html + '</li>';
+          if (text.data.html == '') return;
+          return '<li>' + text.data.html + '</li>';
         }).join('');
         html += '<ul>';
         break;
@@ -99,10 +99,7 @@ function getNewEdirorNode(key, type) {
         key: key,
         type: type,
         data: {
-          textList: [{
-            key: guid(),
-            html: ''
-          }]
+          textList: [getNewEdirorNode(guid(), 'text')]
         }
       };
       break;
@@ -598,23 +595,15 @@ var EditorList = React.createClass({
       }
     }, editorNode);
 
-    var setItem = {
-      key: editorNode.key,
-      html: editorNode.data.html
-    }
-
     var newEditorNode = $.extend(true, {}, this.props.data);
     if (editorNodeIndex === false) {
-      newEditorNode.data.textList.push(setItem);
+      newEditorNode.data.textList.push(editorNode);
     } else {
-      newEditorNode.data.textList[editorNodeIndex] = setItem;
+      newEditorNode.data.textList[editorNodeIndex] = editorNode;
     };
 
-    if (newEditorNode.data.textList.length == 0 || newEditorNode.data.textList[newEditorNode.data.textList.length - 1].html != '') {
-      newEditorNode.data.textList.push({
-        key: guid(),
-        html: ''
-      });
+    if (newEditorNode.data.textList.length == 0 || newEditorNode.data.textList[newEditorNode.data.textList.length - 1].data.html != '') {
+      newEditorNode.data.textList.push(getNewEdirorNode(guid(), 'text'));
     }
 
     this.props.onEditorChange(newEditorNode);
@@ -622,7 +611,7 @@ var EditorList = React.createClass({
   render: function() {
     var typeNodes = this.props.data.data.textList.map(function(text) {
       var editorNode = getNewEdirorNode(text.key, 'text');
-      editorNode.data.html = text.html;
+      editorNode.data.html = text.data.html;
       return (
         <WysiwygEditor
           key={editorNode.key}
