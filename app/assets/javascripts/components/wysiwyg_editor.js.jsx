@@ -31,6 +31,14 @@ function convOutputHTML(data) {
 
         html = '<h2>' + html + '</h2>';
         break;
+      case 'image':
+        html = '<figure>';
+        html += '<img src="' + editorNode.data.src.toString() + '" />';
+        if (editorNode.data.caption) {
+          html += '<figcaption>' + editorNode.data.caption.toString().replace(/\n/g, '<br />') + '</figcaption>'
+        }
+        html += '</figure>';
+        break;
 
       default:
         console.log("TODO: convOutputHTML when " + editorNode.type);
@@ -132,6 +140,17 @@ var Editor = React.createClass({
         };
 
         break;
+      case 'image':
+        ret = {
+          key: key,
+          type: type,
+          data: {
+            src: '',
+            caption: ''
+          }
+        };
+
+        break;
       default:
         ret = {
           key: key,
@@ -189,7 +208,7 @@ var Editor = React.createClass({
     return [
       { key: 'h2', text: '見出し' },
       { key: 'text', text: '本文' },
-      { key: 'img', text: '画像' },
+      { key: 'image', text: '画像' },
       { key: 'embed_tag', text: 'タグ' },
       { key: 'ul', text: 'リスト' },
       { key: 'border', text: '枠線' },
@@ -226,6 +245,15 @@ var Editor = React.createClass({
         case 'h2':
           typeNode = (
             <EditorH2
+              key={editorNode.key}
+              onEditorChange={this.handleEditorChange}
+              data={editorNode}
+              />
+          );
+          break;
+        case 'image':
+          typeNode = (
+            <EditorImage
               key={editorNode.key}
               onEditorChange={this.handleEditorChange}
               data={editorNode}
@@ -477,6 +505,49 @@ var WysiwygEditor = React.createClass({
       <div>
         <span style={{fontSize: "12px"}}>本文:</span><br />
         <div ref="editor" />
+      </div>
+    );
+  }
+});
+
+/*****************************************************************************
+
+  画像
+
+ *****************************************************************************/
+var EditorImage = React.createClass({
+  handleChange: function(e) {
+    if (this.props.onChange) {
+      this.props.onChange(e);
+    }
+
+    var editorNode = $.extend(true, {}, this.props.data);
+
+    var imageFiles = ReactDOM.findDOMNode(this.refs.image).files;
+    if (imageFiles.length > 0) {
+      editorNode.data.src = window.URL.createObjectURL(imageFiles[0]);
+    }
+
+    var caption = ReactDOM.findDOMNode(this.refs.caption).value;
+    editorNode.data.caption = caption;
+
+    this.props.onEditorChange(editorNode);
+  },
+  render: function() {
+    return (
+      <div>
+        <span style={{fontSize: "12px"}}>画像:</span><br />
+        <img src={this.props.data.data.src} />
+        <input type="file" ref="image"
+          onChange={this.handleChange}
+          style={{width: "100%", boxSizing: "border-box"}}
+          />
+        <span style={{fontSize: "12px"}}>キャプション:</span><br />
+        <textarea ref="caption"
+          onChange={this.handleChange}
+          value={this.props.data.data.caption}
+          style={{border: "solid 1px #ddd", width: "100%"}}
+          />
       </div>
     );
   }
