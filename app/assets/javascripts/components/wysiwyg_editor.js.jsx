@@ -49,7 +49,7 @@ function convOutputHTML(data) {
         html += '</ul>';
         break;
       case 'border':
-        var tmpHtml = convOutputHTML(editorNode.data.textList);
+        var tmpHtml = convOutputHTML(editorNode.data.nodeList);
         if (tmpHtml != '') {
           html = '<div style="border: solid 1px #ddd; padding: 10px;">';
           html += tmpHtml;
@@ -117,7 +117,7 @@ function getNewEdirorNode(key, type) {
         key: key,
         type: type,
         data: {
-          textList: [getNewEdirorNode(guid(), 'text')]
+          nodeList: [getNewEdirorNode(guid(), '')]
         }
       };
       break;
@@ -722,9 +722,9 @@ var EditorBorder = React.createClass({
   insertEditorNode: function(editorNode, index) {
     var newEditorNode = $.extend(true, {}, this.props.data);
 
-    if (index !== 0 && !index) index = newEditorNode.data.textList.length;
+    if (index !== 0 && !index) index = newEditorNode.data.nodeList.length;
 
-    newEditorNode.data.textList.splice( index, 0, editorNode ) ;
+    newEditorNode.data.nodeList.splice( index, 0, editorNode ) ;
     this.props.onEditorChange(newEditorNode);
   },
   updateEditorNode: function(editorNode) {
@@ -736,9 +736,9 @@ var EditorBorder = React.createClass({
 
     var newEditorNode = $.extend(true, {}, this.props.data);
     if (editorNodeIndex === false) {
-      newEditorNode.data.textList.push(editorNode);
+      newEditorNode.data.nodeList.push(editorNode);
     } else {
-      newEditorNode.data.textList[editorNodeIndex] = editorNode;
+      newEditorNode.data.nodeList[editorNodeIndex] = editorNode;
     };
 
     this.props.onEditorChange(newEditorNode);
@@ -748,14 +748,14 @@ var EditorBorder = React.createClass({
     var editorNodeIndex = this.getIndexEditorNode(editorNode);
 
     var newEditorNode = $.extend(true, {}, this.props.data);
-    newEditorNode.data.textList.splice(editorNodeIndex, 1);
+    newEditorNode.data.nodeList.splice(editorNodeIndex, 1);
 
     this.props.onEditorChange(newEditorNode);
   },
   // editorNodeのindexを取得
   getIndexEditorNode: function(editorNode) {
     var ret = false;
-    this.props.data.data.textList.some(function (node, index) {
+    this.props.data.data.nodeList.some(function (node, index) {
       if (node.key == editorNode.key) {
         ret = index;
         return true;
@@ -765,7 +765,7 @@ var EditorBorder = React.createClass({
     return ret;
   },
   render: function() {
-    var editorNodes = this.props.data.data.textList.map(function (editorNode, index) {
+    var editorNodes = this.props.data.data.nodeList.map(function (editorNode, index) {
       var typeNode = null;
       switch (editorNode.type) {
         case 'text':
