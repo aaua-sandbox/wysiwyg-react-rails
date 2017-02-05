@@ -51,9 +51,15 @@ function convOutputHTML(data) {
       case 'border':
         var tmpHtml = convOutputHTML(editorNode.data.nodeList);
         if (tmpHtml != '') {
-          html = '<div style="border: solid 1px #ddd; padding: 10px;">';
-          html += tmpHtml;
-          html += '</div>';
+          if (editorNode.data.style == 'blockquote') {
+            html = '<blockquote cite="http://www.examle.xxx/kusamakura.html">';
+            html += tmpHtml;
+            html += '</blockquote>';
+          } else {
+            html = '<div style="border: solid 1px #ddd; padding: 10px; margin: 10px 0;">';
+            html += tmpHtml;
+            html += '</div>';
+          }
         }
         break;
 
@@ -117,6 +123,7 @@ function getNewEdirorNode(key, type) {
         key: key,
         type: type,
         data: {
+          style: 'border',
           nodeList: [getNewEdirorNode(guid(), '')]
         }
       };
@@ -713,6 +720,11 @@ var EditorBorder = React.createClass({
 
     this.insertEditorNode(editorNode, index);
   },
+  handleChangeStyle: function (e) {
+    var newEditorNode = $.extend(true, {}, this.props.data);
+    newEditorNode.data.style = e.currentTarget.value;
+    this.props.onEditorChange(newEditorNode);
+  },
   handleChange: function(editorNode) {
     this.updateEditorNode(editorNode);
   },
@@ -830,7 +842,25 @@ var EditorBorder = React.createClass({
     return (
       <div>
         <span style={{fontSize: "12px"}}>枠線:</span><br />
-        <span style={{fontSize: "12px"}}>デザイン:&ensp;□線&ensp;□引用</span><br />
+        <span style={{fontSize: "12px"}}>
+          レイアウト:
+          <label>
+            <input type="radio"
+              value="border"
+              checked={this.props.data.data.style === 'border'}
+              onChange={this.handleChangeStyle}
+              />
+            枠線
+          </label>
+          <label>
+            <input type="radio"
+              value="blockquote"
+              checked={this.props.data.data.style === 'blockquote'}
+              onChange={this.handleChangeStyle}
+              />
+            引用
+          </label>
+        </span><br />
         <EditorNodeInsert
           onClick={this.handleEditorInsert}
           index={0}
