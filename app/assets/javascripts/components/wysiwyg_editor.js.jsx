@@ -32,7 +32,17 @@ function convOutputHTML(data) {
         html = '<h2>' + html + '</h2>';
         break;
       case 'image':
-        html = '<figure>';
+        html = '<figure style="text-align: center;';
+        switch (editorNode.data.style) {
+          case 'left':
+            html += ' float: left;';
+            break;
+          case 'right':
+            html += ' float: right;';
+            break;
+        };
+        html += '">';
+
         html += '<img src="' + editorNode.data.src.toString() + '" />';
         if (editorNode.data.caption) {
           html += '<figcaption>' + editorNode.data.caption.toString().replace(/\n/g, '<br />') + '</figcaption>'
@@ -51,15 +61,19 @@ function convOutputHTML(data) {
       case 'border':
         var tmpHtml = convOutputHTML(editorNode.data.nodeList);
         if (tmpHtml != '') {
-          if (editorNode.data.style == 'blockquote') {
-            html = '<blockquote cite="http://www.examle.xxx/kusamakura.html">';
-            html += tmpHtml;
-            html += '</blockquote>';
-          } else {
-            html = '<div style="border: solid 1px #ddd; padding: 10px; margin: 10px 0;">';
-            html += tmpHtml;
-            html += '</div>';
-          }
+          switch (editorNode.data.style) {
+            case 'blockquote':
+              html = '<blockquote cite="http://www.examle.xxx/kusamakura.html">';
+              html += tmpHtml;
+              html += '<div style="clear: both;"></div>';
+              html += '</blockquote>';
+              break;
+            default:
+              html = '<div style="border: solid 1px #ddd; padding: 10px; margin: 10px 0;">';
+              html += tmpHtml;
+              html += '<div style="clear: both;"></div>';
+              html += '</div>';
+          };
         }
         break;
 
@@ -104,6 +118,7 @@ function getNewEdirorNode(key, type) {
         key: key,
         type: type,
         data: {
+          style: 'centor',
           src: '',
           caption: ''
         }
@@ -573,6 +588,11 @@ var WysiwygEditor = React.createClass({
 
  *****************************************************************************/
 var EditorImage = React.createClass({
+  handleChangeStyle: function (e) {
+    var newEditorNode = $.extend(true, {}, this.props.data);
+    newEditorNode.data.style = e.currentTarget.value;
+    this.props.onEditorChange(newEditorNode);
+  },
   handleChange: function(e) {
     if (this.props.onChange) {
       this.props.onChange(e);
@@ -599,6 +619,33 @@ var EditorImage = React.createClass({
           onChange={this.handleChange}
           style={{width: "100%", boxSizing: "border-box"}}
           />
+        <span style={{fontSize: "12px"}}>
+          レイアウト:
+          <label>
+            <input type="radio"
+              value="left"
+              checked={this.props.data.data.style === 'left'}
+              onChange={this.handleChangeStyle}
+              />
+            左寄せ
+          </label>
+          <label>
+            <input type="radio"
+              value="centor"
+              checked={this.props.data.data.style === 'centor'}
+              onChange={this.handleChangeStyle}
+              />
+            中央寄せ
+          </label>
+          <label>
+            <input type="radio"
+              value="right"
+              checked={this.props.data.data.style === 'right'}
+              onChange={this.handleChangeStyle}
+              />
+            右寄せ
+          </label>
+        </span><br />
         <span style={{fontSize: "12px"}}>キャプション:</span><br />
         <textarea ref="caption"
           onChange={this.handleChange}
