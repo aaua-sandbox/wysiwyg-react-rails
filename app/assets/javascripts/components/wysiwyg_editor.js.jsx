@@ -690,18 +690,49 @@ var EditorList = React.createClass({
 
  *****************************************************************************/
 var EditorBorder = React.createClass({
+  // Menu
+  getMenu: function() {
+    return [
+      { key: 'text', text: '本文' },
+      { key: 'image', text: '画像' },
+      { key: 'embed_tag', text: 'タグ' },
+      { key: 'ul', text: 'リスト' },
+    ];
+  },
+  // Menuクリックイベント
+  handleEditorMenuClick: function(nodeKey, nodeType) {
+    var editorNode = getNewEdirorNode(nodeKey, nodeType);
+    if (editorNode == false) return;
+
+    this.updateEditorNode(editorNode);
+  },
+  handleEditorInsert: function(index) {
+    var nodeKey = guid();
+    var editorNode = getNewEdirorNode(nodeKey, '');
+    if (editorNode == false) return;
+
+    this.insertEditorNode(editorNode, index);
+  },
   handleChange: function(editorNode) {
+    this.updateEditorNode(editorNode);
+  },
+  handleEditorDelete: function(editorNode) {
+    this.deleteEditorNode(editorNode);
+  },
+  insertEditorNode: function(editorNode, index) {
+    var newEditorNode = $.extend(true, {}, this.props.data);
+
+    if (index !== 0 && !index) index = newEditorNode.data.textList.length;
+
+    newEditorNode.data.textList.splice( index, 0, editorNode ) ;
+    this.props.onEditorChange(newEditorNode);
+  },
+  updateEditorNode: function(editorNode) {
     if (this.props.onChange) {
       this.props.onChange(e);
     }
 
-    var editorNodeIndex = false;
-    this.props.data.data.textList.some(function (node, index) {
-      if (node.key == editorNode.key) {
-        editorNodeIndex = index;
-        return true;
-      }
-    }, editorNode);
+    var editorNodeIndex = this.getIndexEditorNode(editorNode);
 
     var newEditorNode = $.extend(true, {}, this.props.data);
     if (editorNodeIndex === false) {
@@ -710,29 +741,101 @@ var EditorBorder = React.createClass({
       newEditorNode.data.textList[editorNodeIndex] = editorNode;
     };
 
-    if (newEditorNode.data.textList.length == 0 || newEditorNode.data.textList[newEditorNode.data.textList.length - 1].data.html != '') {
-      newEditorNode.data.textList.push(getNewEdirorNode(guid(), 'text'));
-    }
+    this.props.onEditorChange(newEditorNode);
+  },
+  // editorNodeの削除
+  deleteEditorNode: function(editorNode) {
+    var editorNodeIndex = this.getIndexEditorNode(editorNode);
+
+    var newEditorNode = $.extend(true, {}, this.props.data);
+    newEditorNode.data.textList.splice(editorNodeIndex, 1);
 
     this.props.onEditorChange(newEditorNode);
   },
+  // editorNodeのindexを取得
+  getIndexEditorNode: function(editorNode) {
+    var ret = false;
+    this.props.data.data.textList.some(function (node, index) {
+      if (node.key == editorNode.key) {
+        ret = index;
+        return true;
+      }
+    }, editorNode);
+
+    return ret;
+  },
   render: function() {
-    var typeNodes = this.props.data.data.textList.map(function(text) {
-      var editorNode = getNewEdirorNode(text.key, 'text');
-      editorNode.data.html = text.data.html;
+    var editorNodes = this.props.data.data.textList.map(function (editorNode, index) {
+      var typeNode = null;
+      switch (editorNode.type) {
+        case 'text':
+          typeNode = (
+            <WysiwygEditor
+              key={editorNode.key}
+              onEditorChange={this.handleChange}
+              data={editorNode}
+              />
+          );
+          break;
+        case 'image':
+          typeNode = (
+            <EditorImage
+              key={editorNode.key}
+              onEditorChange={this.handleChange}
+              data={editorNode}
+              />
+          );
+          break;
+        case 'embed_tag':
+          typeNode = (
+            <EditorEmbedTag
+              key={editorNode.key}
+              onEditorChange={this.handleChange}
+              data={editorNode}
+              />
+          );
+          break;
+        case 'ul':
+          typeNode = (
+            <EditorList
+              key={editorNode.key}
+              onEditorChange={this.handleChange}
+              data={editorNode}
+              />
+          );
+          break;
+
+        default:
+          // Menuのみ
+      };
       return (
-        <WysiwygEditor
-          key={editorNode.key}
-          onEditorChange={this.handleChange}
-          data={editorNode}
-          />
+        <div>
+          <div style={{border: "solid 1px #ddd", padding: "10px", margin: "10px 0"}}>
+            <EditorMenu
+              onClick={this.handleEditorMenuClick}
+              onDelete={this.handleEditorDelete}
+              data={editorNode}
+              menu={this.getMenu()}
+              />
+            {typeNode}
+          </div>
+          <EditorNodeInsert
+            onClick={this.handleEditorInsert}
+            index={index + 1}
+            />
+        </div>
       );
     }.bind(this));
 
     return (
       <div>
         <span style={{fontSize: "12px"}}>枠線:</span><br />
-        {typeNodes}
+        <span style={{fontSize: "12px"}}>デザイン:&ensp;□線&ensp;□引用</span><br />
+        <EditorNodeInsert
+          onClick={this.handleEditorInsert}
+          index={0}
+          />
+        {editorNodes}
       </div>
     );
   }
