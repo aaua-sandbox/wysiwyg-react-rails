@@ -23,6 +23,8 @@ function convOutputHTML(data) {
       case 'text':
       case 'embed_tag':
         html = editorNode.data.html.toString();
+        // TODO: 回り込みの解除をどこで行うか
+        html += '<div style="clear: both;"></div>';
         break;
       case 'h2':
         html = editorNode.data.html.toString();
