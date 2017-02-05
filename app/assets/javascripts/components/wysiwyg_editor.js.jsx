@@ -42,10 +42,19 @@ function convOutputHTML(data) {
       case 'ul':
         html = '<ul>';
         html += editorNode.data.textList.map(function(text) {
-          if (text.data.html == '') return;
-          return '<li>' + text.data.html + '</li>';
+          var tmpHtml = convOutputHTML([text]);
+          if (tmpHtml == '') return;
+          return '<li>' + tmpHtml + '</li>';
         }).join('');
-        html += '<ul>';
+        html += '</ul>';
+        break;
+      case 'border':
+        var tmpHtml = convOutputHTML(editorNode.data.textList);
+        if (tmpHtml != '') {
+          html = '<div style="border: solid 1px #ddd; padding: 10px;">';
+          html += tmpHtml;
+          html += '</div>';
+        }
         break;
 
       default:
@@ -95,6 +104,15 @@ function getNewEdirorNode(key, type) {
       };
       break;
     case 'ul':
+      ret = {
+        key: key,
+        type: type,
+        data: {
+          textList: [getNewEdirorNode(guid(), 'text')]
+        }
+      };
+      break;
+    case 'border':
       ret = {
         key: key,
         type: type,
@@ -276,6 +294,15 @@ var Editor = React.createClass({
               />
           );
           break;
+        case 'embed_tag':
+          typeNode = (
+            <EditorEmbedTag
+              key={editorNode.key}
+              onEditorChange={this.handleEditorChange}
+              data={editorNode}
+              />
+          );
+          break;
         case 'ul':
           typeNode = (
             <EditorList
@@ -285,9 +312,9 @@ var Editor = React.createClass({
               />
           );
           break;
-        case 'embed_tag':
+        case 'border':
           typeNode = (
-            <EditorEmbedTag
+            <EditorBorder
               key={editorNode.key}
               onEditorChange={this.handleEditorChange}
               data={editorNode}
@@ -578,6 +605,33 @@ var EditorImage = React.createClass({
 
 /*****************************************************************************
 
+  埋め込みタグ
+
+ *****************************************************************************/
+var EditorEmbedTag = React.createClass({
+  handleChange: function(e) {
+    if (this.props.onChange) {
+      this.props.onChange(e);
+    }
+
+    var embed_tag = ReactDOM.findDOMNode(this.refs.embed_tag).value.trim();
+
+    var editorNode = $.extend(true, {}, this.props.data);
+    editorNode.data.html = embed_tag;
+    this.props.onEditorChange(editorNode);
+  },
+  render: function() {
+    return (
+      <div>
+        <span style={{fontSize: "12px"}}>埋め込みタグ:</span><br />
+        <input type="text" ref="embed_tag" onChange={this.handleChange} value={this.props.data.data.html} style={{width: "100%", boxSizing: "border-box"}} />
+      </div>
+    );
+  }
+});
+
+/*****************************************************************************
+
   リスト
 
  *****************************************************************************/
@@ -632,26 +686,53 @@ var EditorList = React.createClass({
 
 /*****************************************************************************
 
-  埋め込みタグ
+  枠線
 
  *****************************************************************************/
-var EditorEmbedTag = React.createClass({
-  handleChange: function(e) {
+var EditorBorder = React.createClass({
+  handleChange: function(editorNode) {
     if (this.props.onChange) {
       this.props.onChange(e);
     }
 
-    var embed_tag = ReactDOM.findDOMNode(this.refs.embed_tag).value.trim();
+    var editorNodeIndex = false;
+    this.props.data.data.textList.some(function (node, index) {
+      if (node.key == editorNode.key) {
+        editorNodeIndex = index;
+        return true;
+      }
+    }, editorNode);
 
-    var editorNode = $.extend(true, {}, this.props.data);
-    editorNode.data.html = embed_tag;
-    this.props.onEditorChange(editorNode);
+    var newEditorNode = $.extend(true, {}, this.props.data);
+    if (editorNodeIndex === false) {
+      newEditorNode.data.textList.push(editorNode);
+    } else {
+      newEditorNode.data.textList[editorNodeIndex] = editorNode;
+    };
+
+    if (newEditorNode.data.textList.length == 0 || newEditorNode.data.textList[newEditorNode.data.textList.length - 1].data.html != '') {
+      newEditorNode.data.textList.push(getNewEdirorNode(guid(), 'text'));
+    }
+
+    this.props.onEditorChange(newEditorNode);
   },
   render: function() {
+    var typeNodes = this.props.data.data.textList.map(function(text) {
+      var editorNode = getNewEdirorNode(text.key, 'text');
+      editorNode.data.html = text.data.html;
+      return (
+        <WysiwygEditor
+          key={editorNode.key}
+          onEditorChange={this.handleChange}
+          data={editorNode}
+          />
+      );
+    }.bind(this));
+
     return (
       <div>
-        <span style={{fontSize: "12px"}}>埋め込みタグ:</span><br />
-        <input type="text" ref="embed_tag" onChange={this.handleChange} value={this.props.data.data.html} style={{width: "100%", boxSizing: "border-box"}} />
+        <span style={{fontSize: "12px"}}>枠線:</span><br />
+        {typeNodes}
       </div>
     );
   }
