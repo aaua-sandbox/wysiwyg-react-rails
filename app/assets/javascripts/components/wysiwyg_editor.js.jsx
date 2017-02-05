@@ -21,10 +21,12 @@ function convOutputHTML(data) {
     var html = '';
     switch (editorNode.type) {
       case 'text':
-      case 'embed_tag':
         html = editorNode.data.html.toString();
         // TODO: 回り込みの解除をどこで行うか
         html += '<div style="clear: both;"></div>';
+        break;
+      case 'embed_tag':
+        html = editorNode.data.html.toString();
         break;
       case 'h2':
         html = editorNode.data.html.toString();
@@ -120,7 +122,7 @@ function getNewEdirorNode(key, type) {
         key: key,
         type: type,
         data: {
-          style: 'centor',
+          style: 'center',
           src: '',
           caption: ''
         }
@@ -632,8 +634,8 @@ var EditorImage = React.createClass({
           </label>
           <label>
             <input type="radio"
-              value="centor"
-              checked={this.props.data.data.style === 'centor'}
+              value="center"
+              checked={this.props.data.data.style === 'center'}
               onChange={this.handleChangeStyle}
               />
             中央寄せ
