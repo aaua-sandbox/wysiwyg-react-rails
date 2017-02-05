@@ -63,7 +63,7 @@ function convOutputHTML(data) {
         if (tmpHtml != '') {
           switch (editorNode.data.style) {
             case 'blockquote':
-              html = '<blockquote cite="http://www.examle.xxx/kusamakura.html">';
+              html = '<blockquote cite="https://example.com/">';
               html += tmpHtml;
               html += '<div style="clear: both;"></div>';
               html += '</blockquote>';
@@ -267,8 +267,7 @@ var Editor = React.createClass({
       { key: 'image', text: '画像' },
       { key: 'embed_tag', text: 'タグ' },
       { key: 'ul', text: 'リスト' },
-      { key: 'border', text: '枠線' },
-      { key: 'article_link', text: '記事リンク' }
+      { key: 'border', text: '枠線' }
     ];
   },
   // Menuクリックイベント
