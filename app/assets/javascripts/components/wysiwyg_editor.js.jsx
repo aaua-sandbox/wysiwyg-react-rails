@@ -5,8 +5,8 @@
  *****************************************************************************/
 var EditorCommon = {
    // 出力用HTMLに変換
-  convOutputHTML: function(data) {
-    return data.map(function (editorNode) {
+  convOutputHTML: function(editorNodeList) {
+    return editorNodeList.map(function (editorNode) {
 
       var html = '';
       switch (editorNode.type) {
@@ -83,8 +83,8 @@ var EditorCommon = {
   },
 
   // 出力用JSONに変換
-  convOutputJSON: function(data) {
-    return JSON.stringify(data);
+  convOutputJSON: function(editorNodeList) {
+    return JSON.stringify(editorNodeList);
   },
 
   // debug用出力
@@ -107,7 +107,7 @@ var EditorCommon = {
   },
 
   // 新規EdirorNodeの取得
-  getNewEdirorNode: function(key, type) {
+  buildEdirorNode: function(key, type) {
     var ret = false;
     switch (type) {
       case 'text':
@@ -137,7 +137,7 @@ var EditorCommon = {
           key: key,
           type: type,
           data: {
-            textList: [EditorCommon.getNewEdirorNode(EditorCommon.guid(), 'text')]
+            textList: [EditorCommon.buildEdirorNode(EditorCommon.guid(), 'text')]
           }
         };
         break;
@@ -147,7 +147,7 @@ var EditorCommon = {
           type: type,
           data: {
             style: 'border',
-            nodeList: [EditorCommon.getNewEdirorNode(EditorCommon.guid(), '')]
+            nodeList: [EditorCommon.buildEdirorNode(EditorCommon.guid(), '')]
           }
         };
         break;
@@ -218,7 +218,7 @@ var Editor = React.createClass({
   },
   handleEditorInsert: function(index) {
     var nodeKey = EditorCommon.guid();
-    var editorNode = EditorCommon.getNewEdirorNode(nodeKey, '');
+    var editorNode = EditorCommon.buildEdirorNode(nodeKey, '');
     if (editorNode == false) return;
 
     this.insertEditorNode(editorNode, index);
@@ -281,7 +281,7 @@ var Editor = React.createClass({
   },
   // Menuクリックイベント
   handleEditorMenuClick: function(nodeKey, nodeType) {
-    var editorNode = EditorCommon.getNewEdirorNode(nodeKey, nodeType);
+    var editorNode = EditorCommon.buildEdirorNode(nodeKey, nodeType);
     if (editorNode == false) return;
 
     this.handleEditorChange(editorNode);
@@ -411,6 +411,10 @@ var Editor = React.createClass({
 
  *****************************************************************************/
 var EditorPreview = React.createClass({
+  componentWillUpdate: function() {
+    if (this.scriptTwitter && this.scriptTwitter.parentNode) this.scriptTwitter.parentNode.removeChild(this.scriptTwitter);
+    if (this.scriptPinterest && this.scriptPinterest.parentNode) this.scriptPinterest.parentNode.removeChild(this.scriptPinterest);
+  },
   componentDidUpdate: function() {
 //     // TODO: タグ埋め込みのプレビュー表示をどのようにするか
 //     var x = EditorCommon.convOutputHTML(this.props.data);
@@ -430,18 +434,18 @@ var EditorPreview = React.createClass({
 
     var preview = ReactDOM.findDOMNode(this.refs.preview);
 
-    var scriptTwitter = document.createElement("script");
-    scriptTwitter.setAttribute("src","//platform.twitter.com/widgets.js");
-    scriptTwitter.setAttribute("charset","utf-8");
-    scriptTwitter.async = true;
-    preview.appendChild(scriptTwitter);
+    this.scriptTwitter = document.createElement("script");
+    this.scriptTwitter.setAttribute("src","//platform.twitter.com/widgets.js");
+    this.scriptTwitter.setAttribute("charset","utf-8");
+    this.scriptTwitter.async = true;
+    preview.appendChild(this.scriptTwitter);
 
     // TODO: 動作しない
-    var scriptPinterest = document.createElement("script");
-    scriptPinterest.setAttribute("src","//assets.pinterest.com/js/pinit.js");
-    scriptPinterest.async = true;
-    scriptPinterest.defer = true;
-    preview.appendChild(scriptPinterest);
+    this.scriptPinterest = document.createElement("script");
+    this.scriptPinterest.setAttribute("src","//assets.pinterest.com/js/pinit.js");
+    this.scriptPinterest.async = true;
+    this.scriptPinterest.defer = true;
+    preview.appendChild(this.scriptPinterest);
   },
   render: function() {
     // マークダウンの表示
@@ -721,14 +725,14 @@ var EditorNodeUl = React.createClass({
     };
 
     if (newEditorNode.data.textList.length == 0 || newEditorNode.data.textList[newEditorNode.data.textList.length - 1].data.html != '') {
-      newEditorNode.data.textList.push(EditorCommon.getNewEdirorNode(EditorCommon.guid(), 'text'));
+      newEditorNode.data.textList.push(EditorCommon.buildEdirorNode(EditorCommon.guid(), 'text'));
     }
 
     this.props.onEditorChange(newEditorNode);
   },
   render: function() {
     var typeNodes = this.props.data.data.textList.map(function(text) {
-      var editorNode = EditorCommon.getNewEdirorNode(text.key, 'text');
+      var editorNode = EditorCommon.buildEdirorNode(text.key, 'text');
       editorNode.data.html = text.data.html;
       return (
         <EditorNodeText
@@ -765,14 +769,14 @@ var EditorNodeBorder = React.createClass({
   },
   // Menuクリックイベント
   handleEditorMenuClick: function(nodeKey, nodeType) {
-    var editorNode = EditorCommon.getNewEdirorNode(nodeKey, nodeType);
+    var editorNode = EditorCommon.buildEdirorNode(nodeKey, nodeType);
     if (editorNode == false) return;
 
     this.updateEditorNode(editorNode);
   },
   handleEditorInsert: function(index) {
     var nodeKey = EditorCommon.guid();
-    var editorNode = EditorCommon.getNewEdirorNode(nodeKey, '');
+    var editorNode = EditorCommon.buildEdirorNode(nodeKey, '');
     if (editorNode == false) return;
 
     this.insertEditorNode(editorNode, index);
