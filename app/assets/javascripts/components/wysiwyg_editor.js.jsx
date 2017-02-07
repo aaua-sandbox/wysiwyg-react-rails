@@ -448,8 +448,6 @@ var EditorPreview = React.createClass({
     preview.appendChild(this.scriptPinterest);
   },
   render: function() {
-    // マークダウンの表示
-    // var rawMarkup = marked(this.props.data.html.toString(), {sanitize: true})
     var innertHtml = EditorCommon.convOutputHTML(this.props.data);
 
     // dangerouslySetInnerHTMLでHTMLをエスケープせずに表示する
