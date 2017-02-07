@@ -1,164 +1,172 @@
-function guid() {
-  function s4() {
-    return Math.floor((1 + Math.random()) * 0x10000)
-      .toString(16)
-      .substring(1);
-  }
-  return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
-    s4() + '-' + s4() + s4() + s4();
-}
-
-
 /*****************************************************************************
 
   Editor共通
 
  *****************************************************************************/
-// 出力用HTMLに変換
-function convOutputHTML(data) {
-  return data.map(function (editorNode) {
+var EditorCommon = {
+   // 出力用HTMLに変換
+  convOutputHTML: function(data) {
+    return data.map(function (editorNode) {
 
-    var html = '';
-    switch (editorNode.type) {
+      var html = '';
+      switch (editorNode.type) {
+        case 'text':
+          html = editorNode.data.html.toString();
+          // TODO: 回り込みの解除をどこで行うか
+          html += '<div style="clear: both;"></div>';
+          break;
+        case 'embed_tag':
+          html = editorNode.data.html.toString();
+          break;
+        case 'h2':
+          html = editorNode.data.html.toString();
+          // TODO: 空の時にプレビューで行が消えて見える
+          if (html == '') html = '<br>';
+
+          html = '<h2>' + html + '</h2>';
+          break;
+        case 'image':
+          html = '<figure style="text-align: center;';
+          switch (editorNode.data.style) {
+            case 'left':
+              html += ' float: left;';
+              break;
+            case 'right':
+              html += ' float: right;';
+              break;
+          };
+          html += '">';
+
+          html += '<img src="' + editorNode.data.src.toString() + '" />';
+          if (editorNode.data.caption) {
+            html += '<figcaption>' + editorNode.data.caption.toString().replace(/\n/g, '<br />') + '</figcaption>'
+          }
+          html += '</figure>';
+          break;
+        case 'ul':
+          html = '<ul>';
+          html += editorNode.data.textList.map(function(text) {
+            var tmpHtml = EditorCommon.convOutputHTML([text]);
+            if (tmpHtml == '') return;
+            return '<li>' + tmpHtml + '</li>';
+          }).join('');
+          html += '</ul>';
+          break;
+        case 'border':
+          var tmpHtml = EditorCommon.convOutputHTML(editorNode.data.nodeList);
+          if (tmpHtml != '') {
+            switch (editorNode.data.style) {
+              case 'blockquote':
+                html = '<blockquote cite="https://example.com/">';
+                html += tmpHtml;
+                html += '<div style="clear: both;"></div>';
+                html += '</blockquote>';
+                break;
+              default:
+                html = '<div style="border: solid 1px #ddd; padding: 10px; margin: 10px 0;">';
+                html += tmpHtml;
+                html += '<div style="clear: both;"></div>';
+                html += '</div>';
+            };
+          }
+          break;
+
+        case '':
+          break;
+
+        default:
+          console.log("TODO: EditorCommon.convOutputHTML when " + editorNode.type);
+      };
+
+      return html;
+    }).join('');
+  },
+
+  // 出力用JSONに変換
+  convOutputJSON: function(data) {
+    return JSON.stringify(data);
+  },
+
+  // debug用出力
+  p: function() {
+    console.log('----- Editor output -----');
+    console.log($(".editor-output-html").val());
+    console.log(JSON.stringify(JSON.parse($(".editor-output-json").val()), null, '\t'));
+    console.log('-------------------------');
+  },
+
+  // guidの生成
+  guid: function() {
+    function s4() {
+      return Math.floor((1 + Math.random()) * 0x10000)
+        .toString(16)
+        .substring(1);
+    }
+    return s4() + s4() + '-' + s4() + '-' + s4() + '-' +
+      s4() + '-' + s4() + s4() + s4();
+  },
+
+  // 新規EdirorNodeの取得
+  getNewEdirorNode: function(key, type) {
+    var ret = false;
+    switch (type) {
       case 'text':
-        html = editorNode.data.html.toString();
-        // TODO: 回り込みの解除をどこで行うか
-        html += '<div style="clear: both;"></div>';
-        break;
-      case 'embed_tag':
-        html = editorNode.data.html.toString();
-        break;
       case 'h2':
-        html = editorNode.data.html.toString();
-        // TODO: 空の時にプレビューで行が消えて見える
-        if (html == '') html = '<br>';
-
-        html = '<h2>' + html + '</h2>';
+      case 'embed_tag':
+        ret = {
+          key: key,
+          type: type,
+          data: {
+            html: ''
+          }
+        };
         break;
       case 'image':
-        html = '<figure style="text-align: center;';
-        switch (editorNode.data.style) {
-          case 'left':
-            html += ' float: left;';
-            break;
-          case 'right':
-            html += ' float: right;';
-            break;
+        ret = {
+          key: key,
+          type: type,
+          data: {
+            style: 'center',
+            src: '',
+            caption: ''
+          }
         };
-        html += '">';
-
-        html += '<img src="' + editorNode.data.src.toString() + '" />';
-        if (editorNode.data.caption) {
-          html += '<figcaption>' + editorNode.data.caption.toString().replace(/\n/g, '<br />') + '</figcaption>'
-        }
-        html += '</figure>';
         break;
       case 'ul':
-        html = '<ul>';
-        html += editorNode.data.textList.map(function(text) {
-          var tmpHtml = convOutputHTML([text]);
-          if (tmpHtml == '') return;
-          return '<li>' + tmpHtml + '</li>';
-        }).join('');
-        html += '</ul>';
+        ret = {
+          key: key,
+          type: type,
+          data: {
+            textList: [EditorCommon.getNewEdirorNode(EditorCommon.guid(), 'text')]
+          }
+        };
         break;
       case 'border':
-        var tmpHtml = convOutputHTML(editorNode.data.nodeList);
-        if (tmpHtml != '') {
-          switch (editorNode.data.style) {
-            case 'blockquote':
-              html = '<blockquote cite="https://example.com/">';
-              html += tmpHtml;
-              html += '<div style="clear: both;"></div>';
-              html += '</blockquote>';
-              break;
-            default:
-              html = '<div style="border: solid 1px #ddd; padding: 10px; margin: 10px 0;">';
-              html += tmpHtml;
-              html += '<div style="clear: both;"></div>';
-              html += '</div>';
-          };
-        }
+        ret = {
+          key: key,
+          type: type,
+          data: {
+            style: 'border',
+            nodeList: [EditorCommon.getNewEdirorNode(EditorCommon.guid(), '')]
+          }
+        };
+        break;
+      case '':
+        ret = {
+          key: key,
+          type: type,
+          data: {
+            html: ''
+          }
+        };
         break;
 
       default:
-        console.log("TODO: convOutputHTML when " + editorNode.type);
+        console.log("TODO: handleEditorMenuClick when " + type);
     };
 
-    return html;
-  }).join('');
-};
-
-// 出力用JSONに変換
-function convOutputJSON(data) {
-  return JSON.stringify(data);
-};
-
-// debug用出力
-function p() {
-  console.log('----- Editor output -----');
-  console.log($(".editor-output-html").val());
-  console.log(JSON.stringify(JSON.parse($(".editor-output-json").val()), null, '\t'));
-  console.log('-------------------------');
-}
-
-// 新規EdirorNodeの取得
-function getNewEdirorNode(key, type) {
-  var ret = false;
-  switch (type) {
-    case 'text':
-    case 'h2':
-    case 'embed_tag':
-      ret = {
-        key: key,
-        type: type,
-        data: {
-          html: ''
-        }
-      };
-      break;
-    case 'image':
-      ret = {
-        key: key,
-        type: type,
-        data: {
-          style: 'center',
-          src: '',
-          caption: ''
-        }
-      };
-      break;
-    case 'ul':
-      ret = {
-        key: key,
-        type: type,
-        data: {
-          textList: [getNewEdirorNode(guid(), 'text')]
-        }
-      };
-      break;
-    case 'border':
-      ret = {
-        key: key,
-        type: type,
-        data: {
-          style: 'border',
-          nodeList: [getNewEdirorNode(guid(), '')]
-        }
-      };
-      break;
-    default:
-      ret = {
-        key: key,
-        type: type,
-        data: {
-          html: ''
-        }
-      };
-      console.log("TODO: handleEditorMenuClick when " + type);
-  };
-
-  return ret;
+    return ret;
+  }
 };
 
 /*****************************************************************************
@@ -184,7 +192,7 @@ var Editor = React.createClass({
     return {
       data: [
         {
-          key: guid(),
+          key: EditorCommon.guid(),
           type: '',
           data: {
             html: ''
@@ -200,7 +208,7 @@ var Editor = React.createClass({
     // TODO: Data Load
     // this.setState({ data: [
     //   {
-    //     key: guid(),
+    //     key: EditorCommon.guid(),
     //     type: '',
     //     data: {
     //       html: '<p>Editor1</p>'
@@ -209,8 +217,8 @@ var Editor = React.createClass({
     // ] });
   },
   handleEditorInsert: function(index) {
-    var nodeKey = guid();
-    var editorNode = getNewEdirorNode(nodeKey, '');
+    var nodeKey = EditorCommon.guid();
+    var editorNode = EditorCommon.getNewEdirorNode(nodeKey, '');
     if (editorNode == false) return;
 
     this.insertEditorNode(editorNode, index);
@@ -273,15 +281,15 @@ var Editor = React.createClass({
   },
   // Menuクリックイベント
   handleEditorMenuClick: function(nodeKey, nodeType) {
-    var editorNode = getNewEdirorNode(nodeKey, nodeType);
+    var editorNode = EditorCommon.getNewEdirorNode(nodeKey, nodeType);
     if (editorNode == false) return;
 
     this.handleEditorChange(editorNode);
   },
   // Outputの情報を最新化
   syncOutput: function() {
-    this.outputHTML.value = convOutputHTML(this.state.data);
-    this.outputJSON.value = convOutputJSON(this.state.data);
+    this.outputHTML.value = EditorCommon.convOutputHTML(this.state.data);
+    this.outputJSON.value = EditorCommon.convOutputJSON(this.state.data);
   },
   render: function() {
     this.syncOutput();
@@ -291,7 +299,7 @@ var Editor = React.createClass({
       switch (editorNode.type) {
         case 'text':
           typeNode = (
-            <WysiwygEditor
+            <EditorNodeText
               key={editorNode.key}
               onEditorChange={this.handleEditorChange}
               data={editorNode}
@@ -300,7 +308,7 @@ var Editor = React.createClass({
           break;
         case 'h2':
           typeNode = (
-            <EditorH2
+            <EditorNodeH2
               key={editorNode.key}
               onEditorChange={this.handleEditorChange}
               data={editorNode}
@@ -309,7 +317,7 @@ var Editor = React.createClass({
           break;
         case 'image':
           typeNode = (
-            <EditorImage
+            <EditorNodeImage
               key={editorNode.key}
               onEditorChange={this.handleEditorChange}
               data={editorNode}
@@ -318,7 +326,7 @@ var Editor = React.createClass({
           break;
         case 'embed_tag':
           typeNode = (
-            <EditorEmbedTag
+            <EditorNodeEmbedTag
               key={editorNode.key}
               onEditorChange={this.handleEditorChange}
               data={editorNode}
@@ -327,7 +335,7 @@ var Editor = React.createClass({
           break;
         case 'ul':
           typeNode = (
-            <EditorList
+            <EditorNodeUl
               key={editorNode.key}
               onEditorChange={this.handleEditorChange}
               data={editorNode}
@@ -336,7 +344,7 @@ var Editor = React.createClass({
           break;
         case 'border':
           typeNode = (
-            <EditorBorder
+            <EditorNodeBorder
               key={editorNode.key}
               onEditorChange={this.handleEditorChange}
               data={editorNode}
@@ -405,7 +413,7 @@ var Editor = React.createClass({
 var EditorPreview = React.createClass({
   componentDidUpdate: function() {
 //     // TODO: タグ埋め込みのプレビュー表示をどのようにするか
-//     var x = convOutputHTML(this.props.data);
+//     var x = EditorCommon.convOutputHTML(this.props.data);
 //     console.log(x);
 //     var script=/<script\s(.+)<\/script>/gi.exec(x);
 //
@@ -438,7 +446,7 @@ var EditorPreview = React.createClass({
   render: function() {
     // マークダウンの表示
     // var rawMarkup = marked(this.props.data.html.toString(), {sanitize: true})
-    var innertHtml = convOutputHTML(this.props.data);
+    var innertHtml = EditorCommon.convOutputHTML(this.props.data);
 
     // dangerouslySetInnerHTMLでHTMLをエスケープせずに表示する
     return (
@@ -510,7 +518,7 @@ var EditorNodeInsert = React.createClass({
   本文
 
  *****************************************************************************/
-var EditorH2 = React.createClass({
+var EditorNodeH2 = React.createClass({
   handleChange: function(e) {
     if (this.props.onChange) {
       this.props.onChange(e);
@@ -541,7 +549,7 @@ var EditorH2 = React.createClass({
   本文
 
  *****************************************************************************/
-var WysiwygEditor = React.createClass({
+var EditorNodeText = React.createClass({
   componentDidMount: function() {
     var child = ReactDOM.findDOMNode(this.refs.editor);
     this.editor = $(child).trumbowyg({
@@ -589,7 +597,7 @@ var WysiwygEditor = React.createClass({
   画像
 
  *****************************************************************************/
-var EditorImage = React.createClass({
+var EditorNodeImage = React.createClass({
   handleChangeStyle: function (e) {
     var newEditorNode = $.extend(true, {}, this.props.data);
     newEditorNode.data.style = e.currentTarget.value;
@@ -664,7 +672,7 @@ var EditorImage = React.createClass({
   埋め込みタグ
 
  *****************************************************************************/
-var EditorEmbedTag = React.createClass({
+var EditorNodeEmbedTag = React.createClass({
   handleChange: function(e) {
     if (this.props.onChange) {
       this.props.onChange(e);
@@ -691,7 +699,7 @@ var EditorEmbedTag = React.createClass({
   リスト
 
  *****************************************************************************/
-var EditorList = React.createClass({
+var EditorNodeUl = React.createClass({
   handleChange: function(editorNode) {
     if (this.props.onChange) {
       this.props.onChange(e);
@@ -713,17 +721,17 @@ var EditorList = React.createClass({
     };
 
     if (newEditorNode.data.textList.length == 0 || newEditorNode.data.textList[newEditorNode.data.textList.length - 1].data.html != '') {
-      newEditorNode.data.textList.push(getNewEdirorNode(guid(), 'text'));
+      newEditorNode.data.textList.push(EditorCommon.getNewEdirorNode(EditorCommon.guid(), 'text'));
     }
 
     this.props.onEditorChange(newEditorNode);
   },
   render: function() {
     var typeNodes = this.props.data.data.textList.map(function(text) {
-      var editorNode = getNewEdirorNode(text.key, 'text');
+      var editorNode = EditorCommon.getNewEdirorNode(text.key, 'text');
       editorNode.data.html = text.data.html;
       return (
-        <WysiwygEditor
+        <EditorNodeText
           key={editorNode.key}
           onEditorChange={this.handleChange}
           data={editorNode}
@@ -745,7 +753,7 @@ var EditorList = React.createClass({
   枠線
 
  *****************************************************************************/
-var EditorBorder = React.createClass({
+var EditorNodeBorder = React.createClass({
   // Menu
   getMenu: function() {
     return [
@@ -757,14 +765,14 @@ var EditorBorder = React.createClass({
   },
   // Menuクリックイベント
   handleEditorMenuClick: function(nodeKey, nodeType) {
-    var editorNode = getNewEdirorNode(nodeKey, nodeType);
+    var editorNode = EditorCommon.getNewEdirorNode(nodeKey, nodeType);
     if (editorNode == false) return;
 
     this.updateEditorNode(editorNode);
   },
   handleEditorInsert: function(index) {
-    var nodeKey = guid();
-    var editorNode = getNewEdirorNode(nodeKey, '');
+    var nodeKey = EditorCommon.guid();
+    var editorNode = EditorCommon.getNewEdirorNode(nodeKey, '');
     if (editorNode == false) return;
 
     this.insertEditorNode(editorNode, index);
@@ -831,7 +839,7 @@ var EditorBorder = React.createClass({
       switch (editorNode.type) {
         case 'text':
           typeNode = (
-            <WysiwygEditor
+            <EditorNodeText
               key={editorNode.key}
               onEditorChange={this.handleChange}
               data={editorNode}
@@ -840,7 +848,7 @@ var EditorBorder = React.createClass({
           break;
         case 'image':
           typeNode = (
-            <EditorImage
+            <EditorNodeImage
               key={editorNode.key}
               onEditorChange={this.handleChange}
               data={editorNode}
@@ -849,7 +857,7 @@ var EditorBorder = React.createClass({
           break;
         case 'embed_tag':
           typeNode = (
-            <EditorEmbedTag
+            <EditorNodeEmbedTag
               key={editorNode.key}
               onEditorChange={this.handleChange}
               data={editorNode}
@@ -858,7 +866,7 @@ var EditorBorder = React.createClass({
           break;
         case 'ul':
           typeNode = (
-            <EditorList
+            <EditorNodeUl
               key={editorNode.key}
               onEditorChange={this.handleChange}
               data={editorNode}
@@ -870,7 +878,7 @@ var EditorBorder = React.createClass({
           // Menuのみ
       };
       return (
-        <div key={editorNode.key + ':EditorBorder'}>
+        <div key={editorNode.key + ':EditorNodeBorder'}>
           <div style={{border: "solid 1px #ddd", padding: "10px", margin: "10px 0"}}>
             <EditorMenu
               onClick={this.handleEditorMenuClick}
