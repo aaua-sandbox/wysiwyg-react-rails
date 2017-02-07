@@ -167,17 +167,14 @@ function getNewEdirorNode(key, type) {
 
  *****************************************************************************/
 var Editor = React.createClass({
+
   componentWillMount: function() {
-    if (this.outputHTML) {
-      return;
-    } else {
+    if (!this.outputHTML) {
       this.outputHTML = document.createElement('textarea');
       this.outputHTML.classList.add('editor-output-html');
       $(this.outputHTML).hide();
     }
-    if (this.outputJSON) {
-      return;
-    } else {
+    if (!this.outputJSON) {
       this.outputJSON = document.createElement('textarea');
       this.outputJSON.classList.add('editor-output-json');
       $(this.outputJSON).hide();
@@ -351,7 +348,7 @@ var Editor = React.createClass({
           // Menuのみ
       };
       return (
-        <div>
+        <div key={editorNode.key + ':Editor'}>
           <div style={{border: "solid 1px #ddd", padding: "10px", margin: "10px 0"}}>
             <EditorMenu
               onClick={this.handleEditorMenuClick}
@@ -371,28 +368,30 @@ var Editor = React.createClass({
 
     return (
       <table style={{tableLayout: "fixed", width: "100%"}}>
-        <tr>
-          <td style={{width: "50%", verticalAlign: "top"}}>
-            <EditorNodeInsert
-              onClick={this.handleEditorInsert}
-              index={0}
-              />
-            {editorNodes}
-          </td>
-          <td style={{
-              width: "50%",
-              verticalAlign: "top",
-              borderLeft: "dashed 1px #dddddd",
-              padding: "10px",
-              position: "fixed",
-              top: "0",
-              height: "100%",
-              boxSizing: "border-box",
-              overflowY: "scroll"
-            }}>
-            <EditorPreview data={this.state.data} />
-          </td>
-        </tr>
+        <tbody>
+          <tr>
+            <td style={{width: "50%", verticalAlign: "top"}}>
+              <EditorNodeInsert
+                onClick={this.handleEditorInsert}
+                index={0}
+                />
+              {editorNodes}
+            </td>
+            <td style={{
+                width: "50%",
+                verticalAlign: "top",
+                borderLeft: "dashed 1px #dddddd",
+                padding: "10px",
+                position: "fixed",
+                top: "0",
+                height: "100%",
+                boxSizing: "border-box",
+                overflowY: "scroll"
+              }}>
+              <EditorPreview data={this.state.data} />
+            </td>
+          </tr>
+        </tbody>
       </table>
     );
   }
@@ -465,9 +464,9 @@ var EditorMenu = React.createClass({
     this.props.onDelete(this.props.data);
   },
   render: function() {
-    var menuNodes = this.props.menu.map(function (v) {
+    var menuNodes = this.props.menu.map(function (v, index) {
       return (
-        <li style={{display: "inline-block"}}>
+        <li key={this.props.data.key + ':EditorMenu:' + index} style={{display: "inline-block"}}>
           <button type="button" onClick={this.handleOnClick} value={v.key}>
             {v.text}
           </button>
@@ -476,7 +475,7 @@ var EditorMenu = React.createClass({
     }.bind(this));
 
     menuNodes = menuNodes.concat((
-      <li style={{display: "inline-block", float: "right"}}>
+      <li key={this.props.data.key + ':EditorMenu:delete'} style={{display: "inline-block", float: "right"}}>
         <button type="button" onClick={this.handleDelete} style={{fontWeight: "bold", border: "solid 1px #ddd", backgroundColor: "white"}}>×</button>
       </li>
     ));
@@ -871,7 +870,7 @@ var EditorBorder = React.createClass({
           // Menuのみ
       };
       return (
-        <div>
+        <div key={editorNode.key + ':EditorBorder'}>
           <div style={{border: "solid 1px #ddd", padding: "10px", margin: "10px 0"}}>
             <EditorMenu
               onClick={this.handleEditorMenuClick}
